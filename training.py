@@ -16,7 +16,10 @@ BG_INTENSITY = 32000
 INTENSITY_OFFSET = 32768
 NORM_SPACING = 0.8  # Resize every image slice so that each pixel corresponds to 0.8mm
 MAX_SIZE = 512
-GT_FN = 'DL_info.csv'  # Ground truth file
+GT_FN_TRAIN = 'DL_info_train.csv'  # Ground truth file for training data
+GT_FN_VAL = 'DL_info_val.csv'  # Ground truth file for validation data
+GT_FN_TEST = 'DL_info_test.csv'  # Ground truth file for test data
+GT_FN_DICT = {"train": GT_FN_TRAIN, "val": GT_FN_VAL, "test": GT_FN_TEST}
 DIR_IN = 'Images_png'  # input directory
 
 
@@ -83,6 +86,17 @@ def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epo
 
     # load best model weights
     # model.load_state_dict(best_model_wts)
+    # # Export the model
+    # torch.onnx.export(model,  # model being run
+    #                   (inputs, targets),  # model input (or a tuple for multiple inputs)
+    #                   "deep_lesion.onnx",  # where to save the model (can be a file or file-like object)
+    #                   export_params=True,  # store the trained parameter weights inside the model file
+    #                   opset_version=10,  # the ONNX version to export the model to
+    #                   do_constant_folding=True,  # wether to execute constant folding for optimization
+    #                   input_names=['input'],  # the model's input names
+    #                   output_names=['output'],  # the model's output names
+    #                   dynamic_axes={'input': {0: 'batch_size'},  # variable lenght axes
+    #                                 'output': {0: 'batch_size'}})
     return model
 
 
@@ -92,12 +106,20 @@ def main():
                             , T.IntensityWindowing(WINDOWING)
                             , T.SpacingResize(NORM_SPACING, MAX_SIZE)
                             , T.ToTensor()])
+        , 'val': T.Compose([T.ClipBlackBorder(BG_INTENSITY), T.ToOriginalHU(INTENSITY_OFFSET)
+                            , T.IntensityWindowing(WINDOWING)
+                            , T.SpacingResize(NORM_SPACING, MAX_SIZE)
+                            , T.ToTensor()])
+        , 'test': T.Compose([T.ClipBlackBorder(BG_INTENSITY), T.ToOriginalHU(INTENSITY_OFFSET)
+                            , T.IntensityWindowing(WINDOWING)
+                            , T.SpacingResize(NORM_SPACING, MAX_SIZE)
+                            , T.ToTensor()])
     }
 
-    image_datasets = {x: DeepLesion(DIR_IN, GT_FN, data_transforms[x]) for x in ['train']}
+    image_datasets = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val', 'test']}
     dl_dataloaders = {x: DataLoader(image_datasets[x], batch_size=1, shuffle=True, num_workers=0
-                                    , collate_fn=BatchCollator) for x in ['train']}
-    dl_dataset_sizes = {x: len(image_datasets[x]) for x in ['train']}
+                                    , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
+    dl_dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val', 'test']}
 
     # for batch_id, (inputs, targets) in enumerate(dl_dataloaders['train']):
     #     i = 0
