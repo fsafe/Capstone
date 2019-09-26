@@ -95,7 +95,10 @@ class ToTensor(object):
         if targets is not None:
             for i, (bbox, pseudo_mask) in enumerate(zip(targets["boxes"], targets["masks"])):
                 pseudo_mask = TF.to_tensor(pseudo_mask)
-                bbox = torch.from_numpy(bbox).float()
+                if type(bbox) != torch.Tensor:
+                    bbox = torch.from_numpy(bbox).float()
+                else:
+                    bbox = bbox.float()
                 targets["boxes"][i] = bbox
                 targets["masks"][i] = pseudo_mask
             targets['boxes'] = torch.stack(targets['boxes'])

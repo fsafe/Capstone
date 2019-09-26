@@ -7,6 +7,7 @@ import os
 import traceback
 from scipy.ndimage.morphology import binary_opening
 from scipy.spatial import distance
+import torch
 
 
 # https://github.com/rsummers11/CADLab/blob/1192f13b1a6fc0beb3407534a9d3ef7b59df6ba0/lesion_detector_3DCE/rcnn/fio/load_ct_img.py
@@ -151,7 +152,10 @@ def CreatePseudoMask(image, bboxes, diagonal_points_list):
         b2 = np.array([diagonal_points[6], diagonal_points[7]])
         cen, semi_axes, angles = ellipse_quadrant_params(a1, a2, b1, b2)
         semi_axes = semi_axes.astype(int)
-        bbox_copy = bbox.copy()
+        if type(bbox) == torch.Tensor:
+            bbox_copy = bbox.numpy()
+        else:
+            bbox_copy = bbox.copy()
         bbox_copy = np.int16(bbox_copy)
         cv2.ellipse(img_copy, tuple(cen.astype(int)), tuple(semi_axes[0:2]), angles[0], 0, 90, 255, -1)
         cv2.ellipse(img_copy, tuple(cen.astype(int)), tuple(semi_axes[2:0:-1]), angles[1], -90, 0, 255, -1)
