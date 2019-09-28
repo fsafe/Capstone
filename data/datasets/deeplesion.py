@@ -10,6 +10,7 @@ class DeepLesion(Dataset):
         self.data_dir = data_dir
         self.annotation_info = read_DL_info(annotations_fn)
         self.transform = transform
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def __getitem__(self, index):
         image = cv2.imread(os.path.join(self.data_dir, list(self.annotation_info.keys())[index]), -1)
@@ -20,7 +21,7 @@ class DeepLesion(Dataset):
         targets = {"boxes": bboxes, "masks": pseudo_masks}
         if self.transform:
             image, _, targets = self.transform(image, spacing, targets)
-        label = torch.ones(len(bboxes), dtype=torch.int64)
+        label = torch.ones(len(bboxes), dtype=torch.int64).to(self.device)
         targets["labels"] = label
         return image, targets
 
