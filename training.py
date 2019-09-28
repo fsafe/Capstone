@@ -54,7 +54,7 @@ def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epo
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
-                    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                     model = model.to(device)
                     loss_dict = model(inputs, targets)
                     losses = sum(loss for loss in loss_dict.values())
