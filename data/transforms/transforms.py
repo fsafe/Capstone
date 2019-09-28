@@ -91,14 +91,18 @@ class SpacingResize(object):
 
 class ToTensor(object):
     def __call__(self, image, spacing=None, targets=None):
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         image = TF.to_tensor(image)
+        image = image.to(device)
         if targets is not None:
             for i, (bbox, pseudo_mask) in enumerate(zip(targets["boxes"], targets["masks"])):
                 pseudo_mask = TF.to_tensor(pseudo_mask)
+                pseudo_mask = pseudo_mask.to(device)
                 if type(bbox) != torch.Tensor:
                     bbox = torch.from_numpy(bbox).float()
                 else:
                     bbox = bbox.float()
+                    bbox = bbox.to(device)
                 targets["boxes"][i] = bbox
                 targets["masks"][i] = pseudo_mask
             targets['boxes'] = torch.stack(targets['boxes'])
