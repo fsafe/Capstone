@@ -17,9 +17,9 @@ BG_INTENSITY = 32000
 INTENSITY_OFFSET = 32768
 NORM_SPACING = 0.8  # Resize every image slice so that each pixel corresponds to 0.8mm
 MAX_SIZE = 512
-GT_FN_TRAIN = 'DL_info_train_sample.csv'  # Ground truth file for training data
-GT_FN_VAL = 'DL_info_val_sample.csv'  # Ground truth file for validation data
-GT_FN_TEST = 'DL_info_test_sample.csv'  # Ground truth file for test data
+GT_FN_TRAIN = 'DL_info_train.csv'  # Ground truth file for training data
+GT_FN_VAL = 'DL_info_val.csv'  # Ground truth file for validation data
+GT_FN_TEST = 'DL_info_test.csv'  # Ground truth file for test data
 GT_FN_DICT = {"train": GT_FN_TRAIN, "val": GT_FN_VAL, "test": GT_FN_TEST}
 DIR_IN = 'Images_png'  # input directory
 
