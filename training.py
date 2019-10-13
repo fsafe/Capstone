@@ -12,13 +12,14 @@ from torchvision.models.detection import maskrcnn_resnet50_fpn
 # For more information on Intensity Windowing go to
 # https://radiopaedia.org/articles/windowing-ct
 WINDOWING = [-1024, 3071]
+
 BG_INTENSITY = 32000
 INTENSITY_OFFSET = 32768
 NORM_SPACING = 0.8  # Resize every image slice so that each pixel corresponds to 0.8mm
 MAX_SIZE = 512
-GT_FN_TRAIN = 'DL_info_train.csv'  # Ground truth file for training data
-GT_FN_VAL = 'DL_info_val.csv'  # Ground truth file for validation data
-GT_FN_TEST = 'DL_info_test.csv'  # Ground truth file for test data
+GT_FN_TRAIN = 'DL_info_train_sample.csv'  # Ground truth file for training data
+GT_FN_VAL = 'DL_info_val_sample.csv'  # Ground truth file for validation data
+GT_FN_TEST = 'DL_info_test_sample.csv'  # Ground truth file for test data
 GT_FN_DICT = {"train": GT_FN_TRAIN, "val": GT_FN_VAL, "test": GT_FN_TEST}
 DIR_IN = 'Images_png'  # input directory
 
@@ -118,9 +119,14 @@ def main():
                             , T.ToTensor()])
     }
 
-    image_datasets = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val', 'test']}
+    print("Loading data sets")
+    image_datasets = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val'
+                                                                                                      , 'test']}
+    print("data sets loaded")
+    print("Loading data loaders")
     dl_dataloaders = {x: DataLoader(image_datasets[x], batch_size=1, shuffle=True, num_workers=0
                                     , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
+    print("Loading loaders loaded\n")
     dl_dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val', 'test']}
 
     # for batch_id, (inputs, targets) in enumerate(dl_dataloaders['train']):
@@ -144,7 +150,7 @@ def main():
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
-    dl_model = maskrcnn_resnet50_fpn(num_classes=2)
+    dl_model = maskrcnn_resnet50_fpn(num_classes=2, pretrained=True)
 
     # Observe that all parameters are being optimized
     # optimizer_ft = optim.SGD(dl_model.parameters(), lr=0.001, momentum=0.9)
