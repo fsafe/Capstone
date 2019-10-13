@@ -6,6 +6,8 @@ from data.collate_batch import BatchCollator
 from torch.utils.data import DataLoader
 from data.datasets.deeplesion import *
 from torchvision.models.detection import maskrcnn_resnet50_fpn
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
 # A single windowing (−1024 to 3071 HU) that covers the
 # intensity ranges of lung, soft tissue, and bone.
@@ -27,8 +29,8 @@ DIR_IN = 'Images_png'  # input directory
 def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epochs=25):
     since = time.time()
 
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = 0.0
+    # best_model_wts = copy.deepcopy(model.state_dict())
+    # best_acc = 0.0
 
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -42,7 +44,7 @@ def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epo
                 model.eval()  # Set model to evaluate mode
 
             running_loss = 0.0
-            running_corrects = 0
+            # running_corrects = 0
 
             # Iterate over data.
             for inputs, targets in dataloaders[phase]:
@@ -151,6 +153,23 @@ def main():
     # cv2.destroyAllWindows()
 
     dl_model = maskrcnn_resnet50_fpn(pretrained=True)
+
+    # replace the classifier with a new one, that has
+    # num_classes which is user-defined
+    num_classes = 2  # 1 class (lesion) + background
+
+    # get number of input features for the classifier
+    in_features = dl_model.roi_heads.box_predictor.cls_score.in_features
+    # replace the pre-trained head with a new one
+    dl_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+
+    # now get the number of input features for the mask classifier
+    in_features_mask = dl_model.roi_heads.mask_predictor.conv5_mask.in_channels
+    hidden_layer = 256
+    # and replace the mask predictor with a new one
+    dl_model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
+                                                          hidden_layer,
+                                                          num_classes)
 
     # Observe that all parameters are being optimized
     # optimizer_ft = optim.SGD(dl_model.parameters(), lr=0.001, momentum=0.9)
