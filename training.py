@@ -150,7 +150,7 @@ def main():
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
-    dl_model = maskrcnn_resnet50_fpn(num_classes=2, pretrained=True)
+    dl_model = maskrcnn_resnet50_fpn(pretrained=True)
 
     # Observe that all parameters are being optimized
     # optimizer_ft = optim.SGD(dl_model.parameters(), lr=0.001, momentum=0.9)
