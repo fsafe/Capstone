@@ -159,7 +159,7 @@ def main():
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
-    model_ft = train_model(dl_model, optimizer_ft, exp_lr_scheduler, dl_dataloaders, dl_dataset_sizes, 4)
+    model_ft = train_model(dl_model, optimizer_ft, exp_lr_scheduler, dl_dataloaders, dl_dataset_sizes, 10)
 
 
 if __name__ == '__main__':
