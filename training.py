@@ -1,5 +1,4 @@
 import time
-import copy
 from torch.optim import lr_scheduler, Adam
 from data import transforms as T
 from data.collate_batch import BatchCollator
