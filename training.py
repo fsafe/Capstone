@@ -65,7 +65,7 @@ def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epo
                     if phase == 'train':
                         losses.backward()
                         optimizer.step()
-                        scheduler.step()
+#                        scheduler.step()
 
                 # statistics
                 running_loss += losses.item() * len(inputs)
@@ -151,24 +151,29 @@ def main():
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
-    dl_model = maskrcnn_resnet50_fpn(pretrained=True)
+    pre_trained = True
+    if pre_trained:
+        dl_model = maskrcnn_resnet50_fpn(pretrained=pre_trained)
 
-    # replace the classifier with a new one, that has
-    # num_classes which is user-defined
-    num_classes = 2  # 1 class (lesion) + background
+        # replace the classifier with a new one, that has
+        # num_classes which is user-defined
+        num_classes = 2  # 1 class (lesion) + background
 
-    # get number of input features for the classifier
-    in_features = dl_model.roi_heads.box_predictor.cls_score.in_features
-    # replace the pre-trained head with a new one
-    dl_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+        # get number of input features for the classifier
+        in_features = dl_model.roi_heads.box_predictor.cls_score.in_features
+        # replace the pre-trained head with a new one
+        dl_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
 
-    # now get the number of input features for the mask classifier
-    in_features_mask = dl_model.roi_heads.mask_predictor.conv5_mask.in_channels
-    hidden_layer = 256
-    # and replace the mask predictor with a new one
-    dl_model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
-                                                          hidden_layer,
-                                                          num_classes)
+        # now get the number of input features for the mask classifier
+        in_features_mask = dl_model.roi_heads.mask_predictor.conv5_mask.in_channels
+        hidden_layer = 256
+        # and replace the mask predictor with a new one
+        dl_model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
+                                                              hidden_layer,
+                                                              num_classes)
+    else:
+        dl_model = maskrcnn_resnet50_fpn(num_classes=2, pretrained_backbone=False)
+        print("pretrained=" + str(pre_trained) + "\npretrained_backbone=False")
 
     # Observe that all parameters are being optimized
     # optimizer_ft = optim.SGD(dl_model.parameters(), lr=0.001, momentum=0.9)
