@@ -124,7 +124,7 @@ def read_DL_info(fname):
                     annotation_info[row[0]].append(size_list)
                     annotation_info[row[0]].append(train_val_test_list)
                 recist_points_list.append(np.array([float(x) for x in row[5].split(',')]))
-                bboxes_list.append(np.array([float(x)-1 for x in row[6].split(',')]))
+                bboxes_list.append(np.array([float(x) - 1 for x in row[6].split(',')]))
                 noisy_list.append(int(row[10]) > 0)
                 sp3_d_value = np.array([float(x) for x in row[12].split(',')])
                 spacing3_d_list.append(sp3_d_value)
@@ -164,3 +164,40 @@ def CreatePseudoMask(image, bboxes, diagonal_points_list):
         cv2.rectangle(img_copy, (bbox_copy[0], bbox_copy[1]), (bbox_copy[2], bbox_copy[3]), (0, 255, 0), 1)
         pseudo_masks.append(np.logical_and(img_copy[:, :, 0] == 255, img_copy[:, :, 1] == 0, img_copy[:, :, 2] == 0))
     return pseudo_masks
+
+
+def getioulist(output_list, targets_list):
+    ioulist = []
+    for (item_gtlabels, item_predlabels) in zip(targets_list, output_list):
+        iou_pred_array = np.full((item_predlabels['boxes'].shape[0], item_gtlabels['boxes'].shape[0] + 1), -1.00)
+        for pindex, (pred_bbox, pred_scores) in enumerate(zip(item_predlabels['boxes'], item_predlabels['scores'])):
+            for gtindex, gt_bbox in enumerate(item_gtlabels['boxes']):
+                iou_pred_array[pindex, gtindex] = calculate_iou(gt_bbox, pred_bbox)
+            iou_pred_array[pindex, item_gtlabels['boxes'].shape[0]] = pred_scores
+        ioulist.append(iou_pred_array)
+    return ioulist
+
+
+def calculate_iou(bb1, bb2):
+    dx = min(max(bb1[0], bb1[2]), max(bb2[0], bb2[2])) - max(min(bb1[0], bb1[2]), min(bb2[0], bb2[2]))
+    dy = min(max(bb1[1], bb1[3]), max(bb2[1], bb2[3])) - max(min(bb1[1], bb1[3]), min(bb2[1], bb2[3]))
+    if (dx >= 0) and (dy >= 0):
+        return 2 * dx * dy / (
+                    (abs(bb1[0] - bb1[2]) * abs(bb1[1] - bb1[3])) + (abs(bb2[0] - bb2[2]) * abs(bb2[1] - bb2[3])))
+    else:
+        return 0
+
+
+def calc_froc_metrics(ious, detection_threshold=0.50, iou_threshold=0.50):
+    froc_pairs = np.zeros((len(ious), 2))
+    for i, elem in enumerate(ious):
+        num_lesions = elem.shape[1]-1
+        pos_detections = elem[np.where(elem[:, -1] >= detection_threshold)]
+        lesion_localization = (np.amax(pos_detections[:, :-1], axis=1) >= iou_threshold).sum()
+        nlf = (np.amax(pos_detections[:, :-1], axis=1) < iou_threshold).sum()
+        llf = lesion_localization / num_lesions
+        froc_pairs[i, 0] = llf
+        froc_pairs[i, 1] = nlf
+    avg_froc = np.mean(froc_pairs, axis=0)
+    return avg_froc
+

@@ -11,8 +11,10 @@ def BatchCollator(batch):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     images = []
     targets = []
+    image_ids = []
     for elm in batch:
         images.append(elm[0].to(device))
+        image_ids.append(elm[1]["image_id"])
         for i in range(len(elm[1]["boxes"])):
             elm[1]["boxes"][i] = elm[1]["boxes"][i].to(device)
             elm[1]["masks"][i] = elm[1]["masks"][i].to(device)

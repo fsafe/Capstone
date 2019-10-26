@@ -1,5 +1,4 @@
 from torch.utils.data import Dataset
-import torch
 from utils import *
 
 
@@ -13,7 +12,8 @@ class DeepLesion(Dataset):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def __getitem__(self, index):
-        image = cv2.imread(os.path.join(self.data_dir, list(self.annotation_info.keys())[index]), -1)
+        fname = list(self.annotation_info.keys())[index]
+        image = cv2.imread(os.path.join(self.data_dir, fname), -1)
         bboxes = list(self.annotation_info.values())[index][1]
         points = list(self.annotation_info.values())[index][0]
         spacing = list(self.annotation_info.values())[index][4][0]
@@ -21,8 +21,15 @@ class DeepLesion(Dataset):
         targets = {"boxes": bboxes, "masks": pseudo_masks}
         if self.transform:
             image, _, targets = self.transform(image, spacing, targets)
+            record = self.annotation_info.get(fname)
+            tsize = np.array([image.shape[1], image.shape[2]])
+            if len(record) > 8:
+                record[8] = tsize
+            else:
+                record.append(tsize)
         label = torch.ones(len(bboxes), dtype=torch.int64).to(self.device)
         targets["labels"] = label
+        targets["image_id"] = fname
         return image, targets
 
     def __len__(self):
