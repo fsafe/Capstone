@@ -4,6 +4,53 @@ import torch
 from utils import getioulist, calc_froc_metrics
 
 
+def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
+
+    running_loss = 0.0
+    model.train()  # Set model to training mode
+
+    # Iterate over data.
+    for inputs, targets in dataloader:
+
+        # zero the parameter gradients
+        optimizer.zero_grad()
+
+        # forward
+        # track history for training
+        with torch.set_grad_enabled(True):
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            model = model.to(device)
+            loss_dict = model(inputs, targets)
+        losses = sum(loss for loss in loss_dict.values())
+        loss_value = losses.item()
+
+        if not math.isfinite(loss_value):
+            print("Loss is {}, stopping training".format(loss_value))
+            print(loss_dict)
+            sys.exit(1)
+
+        losses.backward()
+        optimizer.step()
+        # scheduler.step()
+
+        # statistics
+        running_loss += losses.item() * len(inputs)
+
+    epoch_loss = running_loss / dataset_size
+    print('Train Loss: {:.4f}'.format(epoch_loss))
+
+
+def evaluate(model, dataloader):
+    model.eval()  # Set model to training mode
+    for inputs, targets in dataloader:
+        with torch.set_grad_enabled(False):
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            model = model.to(device)
+            output = model(inputs)
+        ioulist = getioulist(output, targets)
+        forc_stats = (calc_froc_metrics(ioulist))
+    return forc_stats
+
 # def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epochs=25):
 #     since = time.time()
 #
@@ -85,53 +132,3 @@ from utils import getioulist, calc_froc_metrics
 #     #                   output_names=['output'],  # the model's output names
 #     #                   dynamic_axes={'input': {0: 'batch_size'},  # variable lenght axes
 #     #                                 'output': {0: 'batch_size'}})
-#     return model
-
-
-def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
-
-    running_loss = 0.0
-    model.train()  # Set model to training mode
-
-    # Iterate over data.
-    for inputs, targets in dataloader:
-
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward
-        # track history for training
-        with torch.set_grad_enabled(True):
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            model = model.to(device)
-            loss_dict = model(inputs, targets)
-        losses = sum(loss for loss in loss_dict.values())
-        loss_value = losses.item()
-
-        if not math.isfinite(loss_value):
-            print("Loss is {}, stopping training".format(loss_value))
-            print(loss_dict)
-            sys.exit(1)
-
-        losses.backward()
-        optimizer.step()
-        # scheduler.step()
-
-        # statistics
-        running_loss += losses.item() * len(inputs)
-
-    epoch_loss = running_loss / dataset_size
-    print('Train Loss: {:.4f}'.format(epoch_loss))
-
-
-def evaluate(model, dataloader):
-    model.eval()  # Set model to training mode
-    for inputs, targets in dataloader:
-        with torch.set_grad_enabled(False):
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            model = model.to(device)
-            output = model(inputs)
-        ioulist = getioulist(output, targets)
-        forc_stats = (calc_froc_metrics(ioulist))
-    return forc_stats
-
