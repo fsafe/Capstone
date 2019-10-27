@@ -80,7 +80,7 @@ def main():
     dl_dataloaders = {x: DataLoader(image_datasets[x], batch_size=2, shuffle=True, num_workers=0
                                     , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
 
-    logging.info('Loading loaders loaded\n')
+    logging.info('data loaders loaded\n')
     dl_dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val', 'test']}
 
     # for batch_id, (inputs, targets) in enumerate(dl_dataloaders['train']):
