@@ -1,5 +1,5 @@
 import time
-import copy
+import logging
 from torch.optim import lr_scheduler, Adam, SGD
 from data import transforms as T
 from data.collate_batch import BatchCollator
@@ -52,11 +52,11 @@ def get_model(pre_trained, pretrained_backbone, numclasses):
                                                               num_classes)
     else:
         dl_model = maskrcnn_resnet50_fpn(num_classes=numclasses, pretrained_backbone=pretrained_backbone)
-        print("pretrained=" + str(pre_trained) + "\npretrained_backbone=" + str(pretrained_backbone))
     return dl_model
 
 
 def main():
+    logging.basicConfig(filename='example.log', level=logging.DEBUG)
     data_transforms = {
         'train': T.Compose([T.ClipBlackBorder(BG_INTENSITY), T.ToOriginalHU(INTENSITY_OFFSET)
                             , T.IntensityWindowing(WINDOWING)
@@ -72,15 +72,15 @@ def main():
                             , T.ToTensor()])
     }
 
-    print("Loading data sets")
+    logging.info('Loading data sets')
     image_datasets = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val'
                                                                                                       , 'test']}
-    print("data sets loaded")
-    print("Loading data loaders")
+    logging.info('data sets loaded')
+    logging.info('Loading data loaders')
     dl_dataloaders = {x: DataLoader(image_datasets[x], batch_size=2, shuffle=True, num_workers=0
                                     , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
 
-    print("Loading loaders loaded\n")
+    logging.info('Loading loaders loaded\n')
     dl_dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val', 'test']}
 
     # for batch_id, (inputs, targets) in enumerate(dl_dataloaders['train']):
@@ -119,17 +119,17 @@ def main():
     # best_model_wts = copy.deepcopy(dl_model.state_dict())
 
     for epoch in range(num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
+        logging.info('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        logging.info('-' * 10)
         train_one_epoc(dl_model, optimizer_ft, exp_lr_scheduler, dl_dataloaders['train'], dl_dataset_sizes['train'])
 
         outputs = evaluate(dl_model, dl_dataloaders['val'])
 
-        print('Average LLF: {}'.format(outputs[0]))
-        print('Average NLF: {}'.format(outputs[1]))
+        logging.info('Average LLF: {}'.format(outputs[0]))
+        logging.info('Average NLF: {}'.format(outputs[1]))
 
     time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(
+    logging.info('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
 
 

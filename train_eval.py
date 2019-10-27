@@ -2,6 +2,7 @@ import sys
 import math
 import torch
 from utils import getioulist, calc_froc_metrics
+import logging
 
 
 def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
@@ -37,7 +38,7 @@ def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
         running_loss += losses.item() * len(inputs)
 
     epoch_loss = running_loss / dataset_size
-    print('Train Loss: {:.4f}'.format(epoch_loss))
+    logging.info('Train Loss: {:.4f}'.format(epoch_loss))
 
 
 def evaluate(model, dataloader):
