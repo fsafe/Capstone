@@ -184,7 +184,7 @@ def calculate_iou(bb1, bb2):
     dy = min(max(bb1[1], bb1[3]), max(bb2[1], bb2[3])) - max(min(bb1[1], bb1[3]), min(bb2[1], bb2[3]))
     if (dx > 0) and (dy > 0):
         return 2 * dx * dy / (
-                    (abs(bb1[0] - bb1[2]) * abs(bb1[1] - bb1[3])) + (abs(bb2[0] - bb2[2]) * abs(bb2[1] - bb2[3])))
+                (abs(bb1[0] - bb1[2]) * abs(bb1[1] - bb1[3])) + (abs(bb2[0] - bb2[2]) * abs(bb2[1] - bb2[3])))
     else:
         return 0
 
@@ -201,4 +201,3 @@ def calc_froc_metrics(ious, detection_threshold=0.50, iou_threshold=0.50):
         froc_pairs[i, 1] = nlf
     avg_froc = np.mean(froc_pairs, axis=0)
     return avg_froc
-

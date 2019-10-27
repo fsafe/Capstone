@@ -42,14 +42,14 @@ def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
 
 def evaluate(model, dataloader):
     model.eval()  # Set model to training mode
+    ioulist = []
     for inputs, targets in dataloader:
         with torch.set_grad_enabled(False):
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             model = model.to(device)
             output = model(inputs)
-        ioulist = getioulist(output, targets)
-        forc_stats = (calc_froc_metrics(ioulist))
-    return forc_stats
+        ioulist.append(*getioulist(output, targets))
+    return calc_froc_metrics(ioulist)
 
 # def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epochs=25):
 #     since = time.time()
