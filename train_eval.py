@@ -48,7 +48,7 @@ def evaluate(model, dataloader):
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             model = model.to(device)
             output = model(inputs)
-        ioulist.append(*getioulist(output, targets))
+        ioulist += getioulist(output, targets)
     return calc_froc_metrics(ioulist)
 
 # def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epochs=25):
