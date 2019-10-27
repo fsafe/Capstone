@@ -91,48 +91,49 @@ def read_DL_info(fname):
             reader = csv.reader(csvfile)
             next(reader, None)  # skip the headers row
             for row in reader:
-                filename = row[0]  # replace the last _ in filename with / or \
-                idx = filename.rindex('_')
-                row[0] = filename[:idx] + os.sep + filename[idx + 1:]
-                record = annotation_info.get(row[0])
-                if record is not None:
-                    recist_points_list = annotation_info.get(row[0])[0]
-                    bboxes_list = annotation_info.get(row[0])[1]
-                    noisy_list = annotation_info.get(row[0])[2]
-                    spacing3_d_list = annotation_info.get(row[0])[3]
-                    spacing_list = annotation_info.get(row[0])[4]
-                    size2_d_list = annotation_info.get(row[0])[5]
-                    size_list = annotation_info.get(row[0])[6]
-                    train_val_test_list = annotation_info.get(row[0])[7]
-                else:
-                    recist_points_list = []
-                    bboxes_list = []
-                    noisy_list = []
-                    spacing3_d_list = []
-                    spacing_list = []
-                    size2_d_list = []
-                    size_list = []
-                    train_val_test_list = []
-                    if annotation_info.get(row[0]) is None:
-                        annotation_info[row[0]] = []
-                    annotation_info[row[0]].append(recist_points_list)
-                    annotation_info[row[0]].append(bboxes_list)
-                    annotation_info[row[0]].append(noisy_list)
-                    annotation_info[row[0]].append(spacing3_d_list)
-                    annotation_info[row[0]].append(spacing_list)
-                    annotation_info[row[0]].append(size2_d_list)
-                    annotation_info[row[0]].append(size_list)
-                    annotation_info[row[0]].append(train_val_test_list)
-                recist_points_list.append(np.array([float(x) for x in row[5].split(',')]))
-                bboxes_list.append(np.array([float(x) - 1 for x in row[6].split(',')]))
-                noisy_list.append(int(row[10]) > 0)
-                sp3_d_value = np.array([float(x) for x in row[12].split(',')])
-                spacing3_d_list.append(sp3_d_value)
-                spacing_list.append(sp3_d_value[0])
-                size2_d_value = np.array([float(x) for x in row[13].split(',')])
-                size2_d_list.append(size2_d_value)
-                size_list.append(size2_d_value[0])
-                train_val_test_list.append(int(row[17]))
+                if row[10] == '0':
+                    filename = row[0]  # replace the last _ in filename with / or \
+                    idx = filename.rindex('_')
+                    row[0] = filename[:idx] + os.sep + filename[idx + 1:]
+                    record = annotation_info.get(row[0])
+                    if record is not None:
+                        recist_points_list = annotation_info.get(row[0])[0]
+                        bboxes_list = annotation_info.get(row[0])[1]
+                        noisy_list = annotation_info.get(row[0])[2]
+                        spacing3_d_list = annotation_info.get(row[0])[3]
+                        spacing_list = annotation_info.get(row[0])[4]
+                        size2_d_list = annotation_info.get(row[0])[5]
+                        size_list = annotation_info.get(row[0])[6]
+                        train_val_test_list = annotation_info.get(row[0])[7]
+                    else:
+                        recist_points_list = []
+                        bboxes_list = []
+                        noisy_list = []
+                        spacing3_d_list = []
+                        spacing_list = []
+                        size2_d_list = []
+                        size_list = []
+                        train_val_test_list = []
+                        if annotation_info.get(row[0]) is None:
+                            annotation_info[row[0]] = []
+                        annotation_info[row[0]].append(recist_points_list)
+                        annotation_info[row[0]].append(bboxes_list)
+                        annotation_info[row[0]].append(noisy_list)
+                        annotation_info[row[0]].append(spacing3_d_list)
+                        annotation_info[row[0]].append(spacing_list)
+                        annotation_info[row[0]].append(size2_d_list)
+                        annotation_info[row[0]].append(size_list)
+                        annotation_info[row[0]].append(train_val_test_list)
+                    recist_points_list.append(np.array([float(x) for x in row[5].split(',')]))
+                    bboxes_list.append(np.array([float(x) - 1 for x in row[6].split(',')]))
+                    noisy_list.append(int(row[10]) > 0)
+                    sp3_d_value = np.array([float(x) for x in row[12].split(',')])
+                    spacing3_d_list.append(sp3_d_value)
+                    spacing_list.append(sp3_d_value[0])
+                    size2_d_value = np.array([float(x) for x in row[13].split(',')])
+                    size2_d_list.append(size2_d_value)
+                    size_list.append(size2_d_value[0])
+                    train_val_test_list.append(int(row[17]))
     except FileNotFoundError:
         print(traceback.format_exc())
         sys.exit(1)
