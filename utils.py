@@ -197,13 +197,11 @@ def calc_froc(ious, detection_threshold=0.50, iou_threshold=0.50):
     for i, elem in enumerate(ious):
         num_lesions += elem.shape[1]-1
         pos_detections = elem[np.where(elem[:, -1] >= detection_threshold)]
-        if np.amax(pos_detections[:, :-1], axis=0).size > 0:
+        if pos_detections.size > 0:
             lesion_localizations += (np.amax(pos_detections[:, :-1], axis=0) >= iou_threshold).sum()
-        else:
-            lesion_localizations += 0
-        if np.amax(pos_detections[:, :-1], axis=1).size > 0:
             non_lesion_localizations += (np.amax(pos_detections[:, :-1], axis=1) < iou_threshold).sum()
         else:
+            lesion_localizations += 0
             non_lesion_localizations += 0
         num_images += 1
     llf = lesion_localizations/num_lesions
