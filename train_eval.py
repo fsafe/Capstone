@@ -1,7 +1,7 @@
 import sys
 import math
 import torch
-from utils import getioulist, calc_froc_metrics
+from utils import getioulist, calc_froc
 import logging
 
 
@@ -50,7 +50,7 @@ def evaluate(model, dataloader):
         model = model.to(device)
         output = model(inputs)
         ioulist += getioulist(output, targets)
-    return calc_froc_metrics(ioulist)
+    return calc_froc(ioulist)
 
 # def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epochs=25):
 #     since = time.time()

@@ -123,10 +123,10 @@ def main():
         logging.info('-' * 10)
         train_one_epoc(dl_model, optimizer_ft, exp_lr_scheduler, dl_dataloaders['train'], dl_dataset_sizes['train'])
 
-        outputs = evaluate(dl_model, dl_dataloaders['val'])
+        llf, nlf = evaluate(dl_model, dl_dataloaders['val'])
 
-        logging.info('Average LLF: {}'.format(outputs[0]))
-        logging.info('Average NLF: {}'.format(outputs[1]))
+        logging.info('LLF: {}'.format(llf))
+        logging.info('NLF: {}'.format(nlf))
 
     time_elapsed = time.time() - since
     logging.info('Training complete in {:.0f}m {:.0f}s'.format(

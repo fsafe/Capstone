@@ -189,15 +189,17 @@ def calculate_iou(bb1, bb2):
         return 0
 
 
-def calc_froc_metrics(ious, detection_threshold=0.50, iou_threshold=0.50):
-    froc_pairs = np.zeros((len(ious), 2))
+def calc_froc(ious, detection_threshold=0.50, iou_threshold=0.50):
+    num_images = 0
+    lesion_localizations = 0
+    non_lesion_localizations = 0
+    num_lesions = 0
     for i, elem in enumerate(ious):
-        num_lesions = elem.shape[1]-1
+        num_lesions += elem.shape[1]-1
         pos_detections = elem[np.where(elem[:, -1] >= detection_threshold)]
-        lesion_localization = (np.amax(pos_detections[:, :-1], axis=1) >= iou_threshold).sum()
-        nlf = (np.amax(pos_detections[:, :-1], axis=1) < iou_threshold).sum()
-        llf = lesion_localization / num_lesions
-        froc_pairs[i, 0] = llf
-        froc_pairs[i, 1] = nlf
-    avg_froc = np.mean(froc_pairs, axis=0)
-    return avg_froc
+        lesion_localizations += (np.amax(pos_detections[:, :-1], axis=1) >= iou_threshold).sum()
+        non_lesion_localizations += (np.amax(pos_detections[:, :-1], axis=1) < iou_threshold).sum()
+        num_images += 1
+    llf = lesion_localizations/num_lesions
+    nlf = non_lesion_localizations/num_images
+    return llf, nlf
