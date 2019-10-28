@@ -107,7 +107,7 @@ def main():
 
     params = [p for p in dl_model.parameters() if p.requires_grad]
 
-    # Observe that all parameters are being optimized
+    # Observe that not all parameters are being optimized
     optimizer_ft = SGD(params, lr=0.001, momentum=0.9, weight_decay=0.0001)
     # optimizer_ft = Adam(params, lr=0.001)
 

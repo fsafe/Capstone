@@ -13,15 +13,12 @@ def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
     # Iterate over data.
     for inputs, targets in dataloader:
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward
-        # track history for training
-        with torch.set_grad_enabled(True):
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            model = model.to(device)
-            loss_dict = model(inputs, targets)
+        # # forward
+        # # track history for training
+        # with torch.set_grad_enabled(True):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
+        loss_dict = model(inputs, targets)
         losses = sum(loss for loss in loss_dict.values())
         loss_value = losses.item()
 
@@ -29,6 +26,9 @@ def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
             print("Loss is {}, stopping training".format(loss_value))
             print(loss_dict)
             sys.exit(1)
+
+        # zero the parameter gradients
+        optimizer.zero_grad()
 
         losses.backward()
         optimizer.step()
@@ -41,14 +41,14 @@ def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
     logging.info('Train Loss: {:.4f}'.format(epoch_loss))
 
 
+@torch.no_grad()
 def evaluate(model, dataloader):
     model.eval()  # Set model to training mode
     ioulist = []
     for inputs, targets in dataloader:
-        with torch.set_grad_enabled(False):
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            model = model.to(device)
-            output = model(inputs)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
+        output = model(inputs)
         ioulist += getioulist(output, targets)
     return calc_froc_metrics(ioulist)
 
