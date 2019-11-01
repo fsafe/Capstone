@@ -159,9 +159,9 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=2, gamma=0.001)
 
 num_epochs = 10
 since = time.time()
+model.train()
 
 for epoch in range(num_epochs):
-    model.train()
     print('\nEpoch {}/{}'.format(epoch, num_epochs - 1))
     print('-' * 10)
 
