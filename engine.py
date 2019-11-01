@@ -95,8 +95,6 @@ def main():
     #             bbox = np.int16(bbox)
     #             mask = target["masks"][j].squeeze().numpy()
     #             cv2.rectangle(img_copy, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 1)
-    #             print(mask.shape)
-    #             print(img_copy.shape)
     #             msk_idx = np.where(mask == 1)
     #             img_copy[msk_idx[0], msk_idx[1], 0] = 255
     #         cv2.imshow(str(batch_id) + " " + str(i), img_copy)
@@ -129,8 +127,7 @@ def main():
         logging.info('NLF: {}'.format(nlf))
 
     time_elapsed = time.time() - since
-    logging.info('Training complete in {:.0f}m {:.0f}s'.format(
-        time_elapsed // 60, time_elapsed % 60))
+    logging.info('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
 
 
 if __name__ == '__main__':

@@ -34,7 +34,6 @@ class IntensityWindowing(object):
 
     def __call__(self, image, spacing=None, targets=None):
         # scale intensity to float numbers in 0~255
-        windowing(image, self.win)
         image = windowing(image, self.win).astype('uint8')
         return image, spacing, targets
 
@@ -82,7 +81,7 @@ class SpacingResize(object):
                 pseudo_mask = pseudo_mask.astype(np.float)
                 pseudo_mask = cv2.resize(pseudo_mask, None, None, fx=im_scale, fy=im_scale
                                          , interpolation=cv2.INTER_NEAREST)
-                pseudo_mask = pseudo_mask.astype(np.bool)
+                pseudo_mask = pseudo_mask.astype(np.uint8)
                 bbox *= im_scale
                 targets["boxes"][i] = bbox
                 targets["masks"][i] = pseudo_mask
@@ -96,7 +95,7 @@ class ToTensor(object):
         image = image.to(device)
         if targets is not None:
             for i, (bbox, pseudo_mask) in enumerate(zip(targets["boxes"], targets["masks"])):
-                pseudo_mask = TF.to_tensor(pseudo_mask)
+                pseudo_mask = torch.from_numpy(pseudo_mask)
                 if type(bbox) != torch.Tensor:
                     bbox = torch.from_numpy(bbox).float()
                 else:

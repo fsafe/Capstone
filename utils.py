@@ -163,7 +163,8 @@ def CreatePseudoMask(image, bboxes, diagonal_points_list):
         cv2.ellipse(img_copy, tuple(cen.astype(int)), tuple(semi_axes[2:4]), angles[1], 0, 90, 255, -1)
         cv2.ellipse(img_copy, tuple(cen.astype(int)), tuple([semi_axes[0], semi_axes[3]]), angles[0], -90, 0, 255, -1)
         cv2.rectangle(img_copy, (bbox_copy[0], bbox_copy[1]), (bbox_copy[2], bbox_copy[3]), (0, 255, 0), 1)
-        pseudo_masks.append(np.logical_and(img_copy[:, :, 0] == 255, img_copy[:, :, 1] == 0, img_copy[:, :, 2] == 0))
+        pseudo_masks.append(np.logical_and(img_copy[:, :, 0] == 255, img_copy[:, :, 1] == 0, img_copy[:, :, 2] == 0)
+                            .astype('uint8'))
     return pseudo_masks
 
 
