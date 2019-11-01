@@ -15,9 +15,8 @@ img = cv2.imread('004408_01_02_088.png', -1)
 # https://nihcc.app.box.com/v/DeepLesion/file/306056134060
 img = img.astype(np.float32, copy=False) - 32768
 
-# img = img.astype(float)
-
-# intensity windowing
+# intensity windowing with window [-1024, 3071] HU covers the intensity ranges of the lung, soft tissue, and bone.
+# (https://arxiv.org/pdf/1806.09648.pdf)
 # convert the intensities in a certain range (“window”) to 0-255 for viewing.
 img -= -1024
 img /= 3071 + 1024
@@ -29,9 +28,11 @@ img = img.astype('uint8')
 # convert image to tensor. The output tensor will have range [0,1]
 img_T = TF.to_tensor(img)
 
-# create numpy array version of img_T and draw pseudo_mask on this version with blue color
+# create numpy array version of img_T Tensor and adding a blue pseudo_mask
+# the addition of the mask and bounding box does not affect original image tensor (img_T)
+# on this numpy version by combining 4 quarter sized ellipses. Also add a green bounding box.
+# https://arxiv.org/pdf/1901.06359.pdf
 img_copy = [img_T.squeeze().numpy()] * 3
-# images = [im.astype(float) for im in img_copy]
 img_copy = cv2.merge(img_copy)
 bbox = np.array([188.354, 159.003, 223.22, 183.271])
 bbox = np.int16(bbox)
@@ -42,7 +43,6 @@ cv2.ellipse(img_copy, tuple(cen.astype(int)), tuple(semi_axes[0:2]), angles[0], 
 cv2.ellipse(img_copy, tuple(cen.astype(int)), tuple(semi_axes[2:0:-1]), angles[1], -90, 0, 255, -1)
 cv2.ellipse(img_copy, tuple(cen.astype(int)), tuple(semi_axes[2:4]), angles[1], 0, 90, 255, -1)
 cv2.ellipse(img_copy, tuple(cen.astype(int)), tuple([semi_axes[0], semi_axes[3]]), angles[0], -90, 0, 255, -1)
-cv2.rectangle(img_copy, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 1)
 cv2.rectangle(img_copy, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 1)
 
 # extract pseudo_mask by identifying pixels which are colored blue
@@ -88,7 +88,6 @@ bbox_crop[2] = bbox[2] - l
 bbox_crop[3] = bbox[3] - u
 bbox_crop = np.int16(bbox_crop)
 pseudo_mask_crop = pseudo_mask[u:d + 1, l:r + 1]
-msk_idx = np.where(pseudo_mask_crop == 1)
 
 # construct inputs to model
 img_crop_T = TF.to_tensor(img_crop)
@@ -120,69 +119,65 @@ targets_crop = [elem_crop]
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
-model = maskrcnn_resnet50_fpn(num_classes=2)
+pretrained = False
 
-# Observe that all parameters are being optimized
-optimizer_ft = SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0001)
+if pretrained:
+    model = maskrcnn_resnet50_fpn(pretrained=True)
+    for param in model.parameters():
+        param.requires_grad = False
 
-# # To use a pretrained model uncomment the below block and comments above block
-# model = maskrcnn_resnet50_fpn(pretrained=True)
-#
-#
-# for param in model.parameters():
-#     param.requires_grad = False
-#
-# # replace the classifier with a new one, that has
-# # num_classes which is user-defined
-# num_classes = 2  # 1 class (lesion) + background
-#
-# # get number of input features for the classifier
-# in_features = model.roi_heads.box_predictor.cls_score.in_features
-# # replace the pre-trained head with a new one
-# model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-#
-# # now get the number of input features for the mask classifier
-# in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
-# hidden_layer = 64
-# # and replace the mask predictor with a new one
-# model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
-#                                                       hidden_layer,
-#                                                       num_classes)
-#
-# params = [p for p in model.parameters() if p.requires_grad]
-#
-# # Observe that not all parameters are being optimized
-# optimizer_ft = SGD(params, lr=0.001, momentum=0.9, weight_decay=0.0001)
+    num_classes = 2  # 1 class (lesion) + 0 (background)
 
+    # get number of input features for the classifier
+    in_features = model.roi_heads.box_predictor.cls_score.in_features
+    # replace the pre-trained head with a new one
+    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+
+    # now get the number of input features for the mask classifier
+    in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
+    hidden_layer = 64
+    # and replace the mask predictor with a new one
+    model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
+                                                          hidden_layer,
+                                                          num_classes)
+
+    params = [p for p in model.parameters() if p.requires_grad]
+
+    # Observe that not all parameters are being optimized
+    optimizer_ft = SGD(params, lr=0.001, momentum=0.9, weight_decay=0.0001)
+
+else:
+    # Observe that all parameters are being optimized
+    model = maskrcnn_resnet50_fpn(num_classes=2)
+    optimizer_ft = SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0001)
 
 # don't know how to initialize the weights of the model
 # torch.nn.init.kaiming_normal_(model.parameters(), mode='fan_out')
 
-# Decay LR by a factor of 0.1 every 7 epochs
+# Decay LR by a factor of 0.1 every 2 epochs
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=2, gamma=0.001)
 
 num_epochs = 10
 since = time.time()
 
 for epoch in range(num_epochs):
-    running_loss = 0.0
     model.train()
     print('\nEpoch {}/{}'.format(epoch, num_epochs - 1))
     print('-' * 10)
 
-    loss_dict = model(inputs_crop, targets_crop)
+    # valid inputs to model are (inputs, targets) or (inputs_crop, targets_crop)
+    loss_dict = model(inputs, targets)
+    for (k, i) in loss_dict.items():
+        print(str(k) + ':' + str(i))
     losses = sum(loss for loss in loss_dict.values())
+    print('Total Train Loss: {:.4f}'.format(losses.item()))
 
     # zero the parameter gradients
     optimizer_ft.zero_grad()
-
+    # perform backward propagation, optimization and update model parameters
     losses.backward()
     optimizer_ft.step()
     exp_lr_scheduler.step()
 
-    running_loss += losses.item()
-    print('Train Loss: {:.4f}'.format(running_loss))
-
 time_elapsed = time.time() - since
 print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
-
