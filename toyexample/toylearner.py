@@ -157,7 +157,7 @@ else:
 # Decay LR by a factor of 0.1 every 2 epochs
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=2, gamma=0.001)
 
-num_epochs = 10
+num_epochs = 100
 since = time.time()
 model.train()
 
@@ -178,6 +178,7 @@ for epoch in range(num_epochs):
     losses.backward()
     optimizer_ft.step()
     exp_lr_scheduler.step()
+    del loss_dict, losses
 
 time_elapsed = time.time() - since
 print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
