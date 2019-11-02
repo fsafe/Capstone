@@ -138,38 +138,45 @@ if pretrained:
     hidden_layer = 64
     # and replace the mask predictor with a new one
     model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
-                                                          hidden_layer,
-                                                          num_classes)
+                                                       hidden_layer,
+                                                       num_classes)
 
     params = [p for p in model.parameters() if p.requires_grad]
 
     # Observe that not all parameters are being optimized
-    optimizer_ft = SGD(params, lr=0.001, momentum=0.9, weight_decay=0.0001)
+    optimizer_ft = SGD(params, lr=0.000001, momentum=0.9, weight_decay=0.0001)
 
 else:
     # Observe that all parameters are being optimized
     model = maskrcnn_resnet50_fpn(num_classes=2)
-    optimizer_ft = SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0001)
+    optimizer_ft = SGD(model.parameters(), lr=0.000001, momentum=0.9, weight_decay=0.0001)
 
 # don't know how to initialize the weights of the model
 # torch.nn.init.kaiming_normal_(model.parameters(), mode='fan_out')
 
 # Decay LR by a factor of 0.1 every 2 epochs
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=2, gamma=0.001)
+exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=2, gamma=0.1)
 
 num_epochs = 100
 since = time.time()
 model.train()
 
+print('Pretrained:' + str(pretrained))
+print('momentum:' + str(optimizer_ft.state_dict()['param_groups'][0]['momentum']))
+print('weight_decay:' + str(optimizer_ft.state_dict()['param_groups'][0]['weight_decay']))
+print('LR decay gamma:' + str(exp_lr_scheduler.state_dict()['gamma']))
+print('LR decay step size:' + str(exp_lr_scheduler.state_dict()['step_size']))
+
 for epoch in range(num_epochs):
     print('\nEpoch {}/{}'.format(epoch, num_epochs - 1))
     print('-' * 10)
-
+    print('lr:' + str(optimizer_ft.state_dict()['param_groups'][0]['lr']))
     # valid inputs to model are (inputs, targets) or (inputs_crop, targets_crop)
     loss_dict = model(inputs, targets)
     for (k, i) in loss_dict.items():
         print(str(k) + ':' + str(i))
     losses = sum(loss for loss in loss_dict.values())
+    del loss_dict
     print('Total Train Loss: {:.4f}'.format(losses.item()))
 
     # zero the parameter gradients
@@ -178,7 +185,7 @@ for epoch in range(num_epochs):
     losses.backward()
     optimizer_ft.step()
     exp_lr_scheduler.step()
-    del loss_dict, losses
+    del losses
 
 time_elapsed = time.time() - since
 print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
