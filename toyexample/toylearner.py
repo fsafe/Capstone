@@ -1,5 +1,6 @@
 import cv2
 import time
+import gc
 import numpy as np
 import torch
 from torchvision.transforms import functional as TF
@@ -119,10 +120,10 @@ targets_crop = [elem_crop]
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
-pretrained = False
+pretrained = True
 
 if pretrained:
-    model = maskrcnn_resnet50_fpn(pretrained=True)
+    model = maskrcnn_resnet50_fpn(pretrained=True, min_size=512, max_size=512)
     for param in model.parameters():
         param.requires_grad = False
 
@@ -135,7 +136,7 @@ if pretrained:
 
     # now get the number of input features for the mask classifier
     in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
-    hidden_layer = 64
+    hidden_layer = 256
     # and replace the mask predictor with a new one
     model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
                                                        hidden_layer,
@@ -144,12 +145,12 @@ if pretrained:
     params = [p for p in model.parameters() if p.requires_grad]
 
     # Observe that not all parameters are being optimized
-    optimizer_ft = SGD(params, lr=0.000001, momentum=0.9, weight_decay=0.0001)
+    optimizer_ft = SGD(params, lr=0.001, momentum=0.9, weight_decay=0.0001)
 
 else:
     # Observe that all parameters are being optimized
     model = maskrcnn_resnet50_fpn(num_classes=2)
-    optimizer_ft = SGD(model.parameters(), lr=0.000001, momentum=0.9, weight_decay=0.0001)
+    optimizer_ft = SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0001)
 
 # don't know how to initialize the weights of the model
 # torch.nn.init.kaiming_normal_(model.parameters(), mode='fan_out')
@@ -186,6 +187,7 @@ for epoch in range(num_epochs):
     optimizer_ft.step()
     exp_lr_scheduler.step()
     del losses
+    gc.collect()
 
 time_elapsed = time.time() - since
 print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))

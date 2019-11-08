@@ -208,3 +208,11 @@ def calc_froc(ious, detection_threshold=0.50, iou_threshold=0.50):
     llf = lesion_localizations/num_lesions
     nlf = non_lesion_localizations/num_images
     return llf, nlf
+
+
+def removekey(d, listofkeys):
+    r = dict(d)
+    for key in listofkeys:
+        print('key: {} is removed'.format(key))
+        r.pop(key)
+    return r

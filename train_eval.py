@@ -5,7 +5,7 @@ from utils import getioulist, calc_froc
 import logging
 
 
-def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
+def train_one_epoc(model, optimizer, dataloader, dataset_size):
 
     running_loss = 0.0
     model.train()  # Set model to training mode
@@ -21,7 +21,9 @@ def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
         loss_dict = model(inputs, targets)
         losses = sum(loss for loss in loss_dict.values())
         loss_value = losses.item()
-
+        # logging.info(loss_value)
+        # for (k, i) in loss_dict.items():
+        #     logging.info(str(k) + ':' + str(i))
         if not math.isfinite(loss_value):
             print("Loss is {}, stopping training".format(loss_value))
             print(loss_dict)
@@ -38,6 +40,7 @@ def train_one_epoc(model, optimizer, scheduler, dataloader, dataset_size):
         running_loss += losses.item() * len(inputs)
 
     epoch_loss = running_loss / dataset_size
+    logging.info('lr:' + str(optimizer.state_dict()['param_groups'][0]['lr']))
     logging.info('Train Loss: {:.4f}'.format(epoch_loss))
 
 
@@ -50,6 +53,18 @@ def evaluate(model, dataloader):
         model = model.to(device)
         output = model(inputs)
         ioulist += getioulist(output, targets)
+    # Export the model
+    # torch.onnx.export(model,  # model being run
+    #                   inputs,  # model input (or a tuple for multiple inputs)
+    #                   "deeplesion.onnx",  # where to save the model (can be a file or file-like object)
+    #                   export_params=True,  # store the trained parameter weights inside the model file
+    #                   opset_version=11,  # the ONNX version to export the model to
+    #                   do_constant_folding=True,  # whether to execute constant folding for optimization
+    #                   input_names=['input'],  # the model's input names
+    #                   output_names=['output']  # the model's output names
+    #                   )
+    # dynamic_axes = {'input': {0: 'batch_size'},  # variable length axes
+    #                 'output': {0: 'batch_size'}}
     return calc_froc(ioulist)
 
 # def train_model(model, optimizer, scheduler, dataloaders, dataset_sizes, num_epochs=25):
