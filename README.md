@@ -68,7 +68,7 @@ A sample of the DeepLesion dataset will be a tuple consisting of the CT scan ima
 DeepLesion's initializer also takes an optional argument 'transform' which is used to apply the preprocessing steps described above
 
 Transformations: 
-For each preprocessing/transformation step a separate class is created. These classes will implement a \_\_call__ method and \_\_init__ method. The \_\_init__ is used to customize the transformation. For example in the ToOriginalHU class 'offset' is passed to the \_\_init__ method. The \_\_call__ method on the other hand receives the parameters which are potentially transformed. As a result ToOriginalHU subtracts the 'offset' value from the image, which is passed as a parameter to the \_\_call__ method. This is what the resulting code looks like:
+For each preprocessing/transformation step a separate class is created. These classes will implement a \_\_call__ method and an \_\_init__ method. The \_\_init__ is used to customize the transformation. For example in the ToOriginalHU class, 'offset' is passed to the \_\_init__ method. The \_\_call__ method on the other hand receives the parameters which are potentially transformed. In the  ToOriginalHU class the 'offset' value is subtracted from the image, which is passed as a parameter to the \_\_call__ method. This is what the resulting code looks like:
 
     class ToOriginalHU(object):
         """Subtracting offset from the16-bit pixel intensities to
@@ -84,7 +84,7 @@ All such classes are placed together in a list and the resulting list is passed 
 
 Compose class:
 
-This class also has a an \_\_init__ method and a \_\_call__ method. The \_\_init__ method initializes the class with a collection of classes each representing a transformation as described above. The \_\_call__ method simply traverses the collection instantiating each transformation and storing the result of each transformation in the same variables which are passed as parameters to the next transformation. By doing this Compose chains the preprocessing steps together.
+This class also has a an \_\_init__ method and a \_\_call__ method. The \_\_init__ method initializes the Compose class with a collection of other transformation classes initializers each representing a transformation as described above. The \_\_call__ method simply traverses the collection instantiating each transformation and storing the result of each transformation in the same variables which are passed as parameters to the next transformation. By doing this Compose chains the preprocessing steps together.
 
     class Compose(object):
         def __init__(self, transforms):
@@ -113,4 +113,13 @@ Now let's look at how these concepts are used in the project:
     }
     image_datasets = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val'
                                                                                                       , 'test']}
-The above code snippet first defines a data_transformation dictionary which has 'train', 'val' and 'test' as the key values and an instance of the Compose class with all preprocessing steps as the value for each key. Similarly the image_dataset is a dictionary with the same keys and the values contain an instance of the DeepLesion class. Note that an instance of the Compose class is passed as a parameter to create an instance of the DeepLesion class. This instance of the Compose class is stored in the trasnform variable of the DeepLesion class. 
+The above code snippet first defines a data_transformation dictionary which has 'train', 'val' and 'test' as the key values and an instance of the Compose class (with all preprocessing steps) as the value for each key. Similarly the image_dataset is a dictionary with the same keys and the values contain an instance of the DeepLesion class. Note that an instance of the Compose class is passed to the 'transform' parameter (third parameter) to create an instance of the DeepLesion class. The value of the 'transform' parameter is stored in the 'self.transform' attribute of the DeepLesion class instance. This way all the requred transformations which must be done on the dataset are stored in the dataset object.
+
+torch.utils.data.DataLoader:
+
+This is an iterator class which provides features such as batching and shuffling. Another parameter which is used in the DataLoader class is 'collate_fn' which specifies how the samples will be batched. To illustrate how the 'collate_fn' parameter is used in this project let us recall the structure of a sample of the DeepLesion class. Each sample is a tuple:
+
+'image' : torch.tensor ( this is the CT scan slice stored as a Tensor )
+'targets' : A dictionary having keys 'boxes', 'masks', 'labels' and 'image_id'. 
+
+The above tuple is for one sample. When the DataLoader uses the defaulf batch collate function it will maintain the same structure. In other words the DataLoader iterator will, during each iteration, return a tuple in which the first element is a list of 'image' structures and the second element is a dictionary. This dictionary will have the same keys as 'targets'. Therefore targets['boxes'] will return a list where each element in the list is itself a list of bounding boxes. Similarly targets['masks'] returns a list where each element in the list is itself a list of masks. Howevef the strucure of target which is requiored for the maskrcnn_resnet50_fpn is for 'targets' to be a list (not a dictionary) where each elements of this list is a dictionary with keys 'boxes', 'masks', 'labels'. To make this conversion a custom batch collate function is unsed (BatchCollator).
