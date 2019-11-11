@@ -149,3 +149,5 @@ The RoIAligned proposals from the RPN layer are reshaped and then passed through
 Mask Head and Fully Convolutional Networks
 
 Here the RoIAligned proposals are not reshaped as was the case in the Box Head because reshaping loses the spatial structure information necessary to generate masks. Instead the propsals are passed through a series of 3x3 convolutional layers followed by ReLU activations and 2x2 deconvolutions with stride 2 and finally a 1x1 convolution. Fully convolutional indicates that the neural network is composed of convolutional layers without any fully-connected layers. The process generates the mask predictions per class.
+
+A Mask R-CNN is basically a Faster R-CNN with an additional mask prediction branch. Two other differentiating factors are that a Mask R-CNN uses a Feature Pyramid Network and RoIAlign instead of RoIPool.
