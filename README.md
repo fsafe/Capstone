@@ -14,7 +14,7 @@ Ke Yan et al., "3D Context Enhanced Region-based Convolutional Neural Network fo
 Image recognition and deep learning technologies using Convolutional Neural Networks (CNN) have demonstrated remarkable progress in the medical image analysis field. Traditionally radiologists with extensive clinical expertise visually asses medical images to detect and classify diseases. The task of lesion detection is particularly challenging because non-lesions and true lesions
 can appear similar. 
 
-For my capstone project I use a Mask R-CNN <sup>[1](https://arxiv.org/abs/1703.06870)</sup> to detect lesions in a CT scan. The model outputs a bounding box, instance segmentation and score for each detected lesion. Mask R-CNN was built by the Facebook AI research team (FAIR) in April 2017.
+For my capstone project I use a Mask R-CNN <sup>[1](https://arxiv.org/abs/1703.06870)</sup> with a ResNet-50 Feature Pyramid Network backbone to detect lesions in a CT scan. The model outputs a bounding box, instance segmentation and score for each detected lesion. Mask R-CNN was built by the Facebook AI research team (FAIR) in April 2017.
 
 The algorithms are implemented using Pytoch and run on an Nvidia Quadro P4000 GPU. 
 ## Data:
@@ -123,3 +123,16 @@ This is an iterator class which provides features such as batching and shuffling
 'targets' : A dictionary having keys 'boxes', 'masks', 'labels' and 'image_id'. 
 
 The above tuple is for one sample. When the DataLoader uses the defaulf batch collate function it will maintain the same structure. In other words the DataLoader iterator will, during each iteration, return a tuple in which the first element is a list of 'image' structures and the second element is a dictionary. This dictionary will have the same keys as 'targets'. Therefore targets['boxes'] will return a list where each element in the list is itself a list of bounding boxes. Similarly targets['masks'] returns a list where each element in the list is itself a list of masks. Howevef the strucure of target which is requiored for the maskrcnn_resnet50_fpn is for 'targets' to be a list (not a dictionary) where each elements of this list is a dictionary with keys 'boxes', 'masks', 'labels'. To make this conversion a custom batch collate function is unsed (BatchCollator).
+
+## Model:
+The model employed to detect lesions when given an image of a CT scan is a Mask R-CNN with a ResNet-50-FPN backbone. A Mask R-CNN is used to detect both bounding boxes around objects (Object Detection) as well as mask segmentation (Semantic Segmentation) for each object. This means that for each object detected a box surrounding the object is given as well as each pixel of the image is classified as being a background pixel or a pixel belonging to one of the classes of objects that the model is trying to detect. These two tasks combined together are called Object Instance Segmentation.
+
+Here are the main components of the Mask R-CNN:
+
+Backbone:
+The ResNet-50 backbone is a an architecture which acts as a feature extractor which means it takes the input image and outputs a feature map. The early layers detect low level features (edges and corners), and later layers successively detect higher level features (cars, balls, cats). The ResNet-50-FPN backbone is an improvement of this concept by using a Feature Pyramid Network. Essentially the FPN has a bottom-top pathway where the image is passed through a series of CNNs with down sampling (by doubling the stride at each stage). At each stage the image's spatial dimension (i.e. image resolution which is not to be confused with feature resolution) decreases however the semantic value (feature resolution) increases. This is then followed by the top-bottom pathway which takes the high level features from the last layer of the bottom-top pathway and passes them down through a series of CNNs to lower layers (upsampling by a factor of 2 at each layer). The feaure from the top-bottom pathway at each layer are then fused with the features of the same spatial size from the bottom-up pathway via lateral connections.
+
+Region Proposal Network (RPN):
+The FPN is essentially a feature detector and not an object detector on its own. The features from the FPN are fed into a learned RPN. The RPN then learns to proposes regions in the feature maps which may contain an object using anchors which are a set of boxes which scale according to the input image.
+
+
