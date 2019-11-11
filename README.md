@@ -125,9 +125,9 @@ This is an iterator class which provides features such as batching and shuffling
 The above tuple is for one sample. When the DataLoader uses the defaulf batch collate function it will maintain the same structure. In other words the DataLoader iterator will, during each iteration, return a tuple in which the first element is a list of 'image' structures and the second element is a dictionary. This dictionary will have the same keys as 'targets'. Therefore targets['boxes'] will return a list where each element in the list is itself a list of bounding boxes. Similarly targets['masks'] returns a list where each element in the list is itself a list of masks. Howevef the strucure of target which is requiored for the maskrcnn_resnet50_fpn is for 'targets' to be a list (not a dictionary) where each elements of this list is a dictionary with keys 'boxes', 'masks', 'labels'. To make this conversion a custom batch collate function is unsed (BatchCollator).
 
 ## Model:
-The model employed to detect lesions when given an image of a CT scan is a Mask R-CNN with a ResNet-50-FPN backbone. A Mask R-CNN is used to detect both bounding boxes around objects (Object Detection) as well as mask segmentation (Semantic Segmentation) for each object. This means that for each object detected a box surrounding the object is given as well as each pixel of the image is classified as being a background pixel or a pixel belonging to one of the classes of objects that the model is trying to detect. These two tasks combined together are called Object Instance Segmentation.
+The model employed to detect lesions when given an image of a CT scan is a Mask R-CNN with a ResNet-50-FPN backbone. A Mask R-CNN is used to detect both bounding boxes around objects (Object Detection) as well as mask segmentation (Semantic Segmentation) for each lesion object. This means that for each lesion detected a box surrounding the object is given as well as each pixel of the image is classified as being a background pixel or a lesion pixel. These two tasks combined together are called Object Instance Segmentation.
 
-Here are the main components of the Mask R-CNN which consists of a feature extracter (backbone) followed by a Region Proposal Network and two network heads (box and mask) which run parallel to each other:
+Here are the main components of the Mask R-CNN which consists of a feature extracter (backbone) followed by a Region Proposal Network and two network heads (box and mask) that run parallel to each other:
 
 Backbone:
 
@@ -146,8 +146,22 @@ Box Head and Fully Connected Layers:
 
 The RoIAligned proposals from the RPN layer are reshaped and then passed through two Fully Connected Layers to generate ROI vectors.The ROI vectors are passed through a predictor, containing 2 branches, each with an Fully Connected layer. One branch predics the object class the other is a bounding box regressor which predicts the coordinates of the bounding box. 
 
-Mask Head and Fully Convolutional Networks
+Mask Head and Fully Convolutional Networks:
 
-Here the RoIAligned proposals are not reshaped as was the case in the Box Head because reshaping loses the spatial structure information necessary to generate masks. Instead the propsals are passed through a series of 3x3 convolutional layers followed by ReLU activations and 2x2 deconvolutions with stride 2 and finally a 1x1 convolution. Fully convolutional indicates that the neural network is composed of convolutional layers without any fully-connected layers. The process generates the mask predictions per class.
+Here the RoIAligned proposals are not reshaped as was the case in the Box Head because reshaping loses the spatial structure information necessary to generate masks. Instead the propsals are passed through a series of 3x3 convolutional layers followed by ReLU activations and 2x2 deconvolutions with stride 2 and finally a 1x1 convolution. Fully convolutional indicates that the neural network is composed of convolutional layers without any fully-connected layers. This entire process generates the mask predictions per class.
 
 A Mask R-CNN is basically a Faster R-CNN with an additional mask prediction branch. Two other differentiating factors are that a Mask R-CNN uses a Feature Pyramid Network and RoIAlign instead of RoIPool.
+
+Mutiltask Loss:
+
+The MaskRCNN class used in the implementation of this project outputs 5 loss functions. The optimization defined during training uses the sum of these 5 losses.
+
+Classification: This log softmax score represents the error of the model correctly classifying a class object (in this case a lesion class from a non-lesion/background class)
+
+Box Regression: Smooth L1 loss as defined in Fast R-CNN by Ross Girshick. This is a linear loss unless the absolute element-wise error falls below 1 in which case the loss is squared. It represents the error in predicting the bounding box coordinates.
+
+Mask Loss: Binary cross entropy loss representing the error in predicting the mask segmentations.
+
+RPN Box Regression Loss: L1 loss showing how well the proposals coming out of the RPN are. In this case a good proposal would be one in which a lesion in contained in the proposed region predicted by the RPN.  
+
+Objectness Loss: Binary cross entropy loss. The RPN output many proposals however each proposal has an objectness score which represents if the anchor contains a background or foreground object. In this case a lesion is the only foreground object. The Objectness loss represents the error of the objectness score.
