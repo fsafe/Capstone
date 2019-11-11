@@ -164,4 +164,34 @@ Mask Loss: Binary cross entropy loss representing the error in predicting the ma
 
 RPN Box Regression Loss: L1 loss showing how well the proposals coming out of the RPN are. In this case a good proposal would be one in which a lesion in contained in the proposed region predicted by the RPN.  
 
-Objectness Loss: Binary cross entropy loss. The RPN output many proposals however each proposal has an objectness score which represents if the anchor contains a background or foreground object. In this case a lesion is the only foreground object. The Objectness loss represents the error of the objectness score.
+Objectness Loss: Binary cross entropy loss. The RPN outputs many proposals however each proposal has an objectness score which represents if the anchor contains a background or foreground object. In this case a lesion is the only foreground object. The Objectness loss represents the error of the objectness score.
+
+## Implementation and results:
+
+The model was trained using a Mask R-CNN which was not pretrained and the network parameters are initialized using Kaiming Initialization. However in this project the ResNet50_fpn backbone used in the MaskRCNN is pretained on ImageNet. The model is run over 10 epocs. During training a loss value is output however during evaluation the model metrics are outputed. These metrics are commonly used for lesion detection and are lesion localization fraction (LLF) and non-lesion localization fraction (NLF). LLF is the total number of lesions detected (at a given threshold) divided by the total number of lesions. NLF is the total number of detected non-lesions (i.e. false positives) divided by the total number of images. During each iteration the model is trained on the training set in training mode and is then put on evaluation mode and does inference on the validation set. The best model outputs an LLF of 67.46% and NLF of 4.97.
+
+Stochastic Gradient Descent Optimizer was used with:
+
+Initial Learning Rate:0.001, momentum=0.9, weight_decay=0.0001
+
+The following hyperparameters of the Mask R-CNN were also used:
+
+rpn_pre_nms_top_n_train=12000
+
+rpn_pre_nms_top_n_test=6000
+
+rpn_post_nms_top_n_train=2000
+
+rpn_post_nms_top_n_test=300
+
+rpn_fg_iou_thresh=0.5
+
+rpn_bg_iou_thresh=0.3
+
+rpn_positive_fraction=0.7
+
+bbox_reg_weights=(1.0, 1.0, 1.0, 1.0)
+
+box_batch_size_per_image=32
+
+In addition an anchor_generator (with scales 16, 24, 32, 48, 96 and aspect ratios 0.5, 1.0, 2.0) and an RPNHead was created and passed during model creation.
