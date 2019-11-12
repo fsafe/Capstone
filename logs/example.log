@@ -1,0 +1,78 @@
+INFO:root:Loading data sets
+INFO:root:data sets loaded
+INFO:root:Loading data loaders
+INFO:root:data loaders loaded
+
+INFO:root:momentum:0.9
+INFO:root:weight_decay:0.0001
+INFO:root:Epoch 0/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.9827
+INFO:root:LLF: 0.6746470227133211
+INFO:root:NLF: 4.967021498643289
+
+INFO:root:Epoch 1/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.8775
+INFO:root:LLF: 0.4827092285655822
+INFO:root:NLF: 2.7664370695053226
+
+INFO:root:Epoch 2/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.7721
+INFO:root:LLF: 0.44526294250051157
+INFO:root:NLF: 2.416823210185765
+
+INFO:root:Epoch 3/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.7010
+INFO:root:LLF: 0.3945160630243503
+INFO:root:NLF: 2.0932999373825925
+
+INFO:root:Epoch 4/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.6447
+INFO:root:LLF: 0.4548802946593002
+INFO:root:NLF: 2.934877896055103
+
+INFO:root:Epoch 5/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.5960
+INFO:root:LLF: 0.4563126662574176
+INFO:root:NLF: 2.996869129618034
+
+INFO:root:Epoch 6/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.5582
+INFO:root:LLF: 0.45528954368733376
+INFO:root:NLF: 3.049885201419328
+
+INFO:root:Epoch 7/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.5271
+INFO:root:LLF: 0.4006547984448537
+INFO:root:NLF: 1.696723022333542
+
+INFO:root:Epoch 8/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.4946
+INFO:root:LLF: 0.41416001636996114
+INFO:root:NLF: 3.7785431016489253
+
+INFO:root:Epoch 9/9
+INFO:root:--------------------
+INFO:root:lr:0.001
+INFO:root:Train Loss: 0.4717
+INFO:root:LLF: 0.42091262533251483
+INFO:root:NLF: 3.052389897724901
+
+INFO:root:Training complete in 1177m 12s
