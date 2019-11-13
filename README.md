@@ -195,3 +195,9 @@ bbox_reg_weights=(1.0, 1.0, 1.0, 1.0)
 box_batch_size_per_image=32
 
 In addition an anchor_generator (with scales 16, 24, 32, 48, 96 and aspect ratios 0.5, 1.0, 2.0) and an RPNHead was created and passed during model creation.
+
+# Sanity Test
+
+In order to quickly test the model's output one scan from the test dataset is taken. Upon inspection one can see that the model's 5th prediction is a true positive detection. The script for the test is contained in 'test.py'. In the below image the red bounding box is the prediction and the green bounding box is the ground truth.
+
+![Test CT Scan](img='simple_test\test_sample.jpg')
