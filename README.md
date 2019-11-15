@@ -201,5 +201,5 @@ In addition an anchor_generator (with scales 16, 24, 32, 48, 96 and aspect ratio
 In order to quickly test the model's output one scan from the test dataset is taken. Upon inspection one can see that the model's top prediction is a true positive detection with 83% confidence. The script for the test is contained in 'test.py'. In the below image the red bounding box is the prediction and the green bounding box is the ground truth. The pink segmentation mask is the result of the overlap between the blue ground truth mask and the red predicted mask.
 
 ![Test CT Scan_overlap](simple_test/test_sample_overlap.jpg)
-![Test CT Scan_overlap](simple_test/test_sample_gt.jpg)
-![Test CT Scan_overlap](simple_test/test_sample_pred.jpg)
+![Test CT Scan_ground_truth](simple_test/test_sample_gt.jpg)
+![Test CT Scan_prediction](simple_test/test_sample_pred.jpg)
