@@ -1,4 +1,3 @@
-import torch
 from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.rpn import AnchorGenerator, RPNHead
 from torch.utils.data import DataLoader
@@ -17,8 +16,8 @@ NORM_SPACING = 0.8  # Resize every image slice so that each pixel corresponds to
 MAX_SIZE = 512
 
 DIR_IN = 'Images_png'  # input directory
-GT_FN_TRAIN = 'DL_info_train.csv'  # Ground truth file for training data
-GT_FN_VAL = 'DL_info_val.csv'  # Ground truth file for validation data
+GT_FN_TRAIN = 'DL_info_train_sample.csv'  # Ground truth file for training data
+GT_FN_VAL = 'DL_info_val_sample.csv'  # Ground truth file for validation data
 GT_FN_TEST = 'DL_info_test_sample.csv'  # Ground truth file for test data
 GT_FN_DICT = {"train": GT_FN_TRAIN, "val": GT_FN_VAL, "test": GT_FN_TEST}
 
@@ -57,18 +56,25 @@ def main():
                             , T.ToTensor()])
         , 'test': T.Compose([T.ToOriginalHU(INTENSITY_OFFSET)
                             , T.IntensityWindowing(WINDOWING)
-                            # , T.SpacingResize(NORM_SPACING, MAX_SIZE)
+                            , T.SpacingResize(NORM_SPACING, MAX_SIZE)
                             , T.ToTensor()])
     }
     image_datasets = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val'
                                                                                                       , 'test']}
+
+    image_datasets_dup = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val'
+                                                                                                          , 'test']}
     dataloaders = {x: DataLoader(image_datasets[x], batch_size=3, shuffle=True, num_workers=0
                                  , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
+
+    dataloaders_dup = {x: DataLoader(image_datasets_dup[x], batch_size=3, shuffle=True, num_workers=0
+                                     , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
     output = test_model(model, dataloaders['test'])
-    predbox = output[0]['boxes'][4].numpy()
-    # predmask = output[0]['masks'][4].squeeze().numpy()
-    # print(output[0]['scores'][4].numpy())
-    for batch_id, (inputs, targets) in enumerate(dataloaders['test']):
+    predbox = output[0]['boxes'][0].numpy()
+    predmask = output[0]['masks'][0].squeeze().numpy()
+    predmask = np.where(predmask > 0.5, 1, 0)
+    print(output[0]['scores'][0].numpy())
+    for batch_id, (inputs, targets) in enumerate(dataloaders_dup['test']):
         i = 0
         for i, (image, target) in enumerate(zip(inputs, targets)):
             img_copy = image.squeeze().numpy()
@@ -76,17 +82,17 @@ def main():
             images = [im.astype(float) for im in images]
             img_copy = cv2.merge(images)
             for j, (bbox, pseudo_mask) in enumerate(zip(target["boxes"], target["masks"])):
-                bbox = target["boxes"][j].squeeze().numpy()
+                bbox = bbox.squeeze().numpy()
                 bbox = np.int16(bbox)
-                mask = target["masks"][j].squeeze().numpy()
+                mask = pseudo_mask.squeeze().numpy()
                 cv2.rectangle(img_copy, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 1)
                 cv2.rectangle(img_copy, (predbox[0], predbox[1]), (predbox[2], predbox[3]), (0, 0, 255), 1)
                 msk_idx = np.where(mask == 1)
-                # pmsk_idx = np.where(predmask == 1)
+                pmsk_idx = np.where(predmask == 1)
                 img_copy[msk_idx[0], msk_idx[1], 0] = 255
-                # img_copy[pmsk_idx[0], pmsk_idx[1], 0] = 255
+                img_copy[pmsk_idx[0], pmsk_idx[1], 2] = 255
             # cv2.imshow(str(batch_id) + " " + str(i), img_copy)
-            cv2.imwrite('simple_test\\test_sample.jpg', img_copy*255)
+            cv2.imwrite('simple_test\\test_sample_overlap.jpg', img_copy*255)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 

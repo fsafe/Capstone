@@ -3,6 +3,7 @@ import time
 import gc
 import numpy as np
 import torch
+from torchvision.models.detection.rpn import AnchorGenerator, RPNHead
 from torchvision.transforms import functional as TF
 from torch.optim import lr_scheduler, SGD
 from torchvision.models.detection import maskrcnn_resnet50_fpn
@@ -120,7 +121,12 @@ targets_crop = [elem_crop]
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
-pretrained = True
+anchor_generator = AnchorGenerator(
+    sizes=tuple([(16, 24, 32, 48, 96) for _ in range(5)]),
+    aspect_ratios=tuple([(0.5, 1.0, 2.0) for _ in range(5)]))
+rpnhead = RPNHead(256, anchor_generator.num_anchors_per_location()[0])
+
+pretrained = False
 
 if pretrained:
     model = maskrcnn_resnet50_fpn(pretrained=True, min_size=512, max_size=512)
@@ -148,15 +154,20 @@ if pretrained:
     optimizer_ft = SGD(params, lr=0.001, momentum=0.9, weight_decay=0.0001)
 
 else:
-    # Observe that all parameters are being optimized
-    model = maskrcnn_resnet50_fpn(num_classes=2)
+    # Observe that all parameters are being optimized (except for the parameters of the pretrained backbone)
+    model = maskrcnn_resnet50_fpn(num_classes=2, max_size=512, rpn_head=rpnhead
+                                  , rpn_anchor_generator=anchor_generator, rpn_pre_nms_top_n_train=12000
+                                  , rpn_pre_nms_top_n_test=6000, rpn_post_nms_top_n_train=2000
+                                  , rpn_post_nms_top_n_test=300, rpn_fg_iou_thresh=0.5, rpn_bg_iou_thresh=0.3
+                                  , rpn_positive_fraction=0.7, bbox_reg_weights=(1.0, 1.0, 1.0, 1.0)
+                                  , box_batch_size_per_image=32)
     optimizer_ft = SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0001)
 
 # don't know how to initialize the weights of the model
 # torch.nn.init.kaiming_normal_(model.parameters(), mode='fan_out')
 
 # Decay LR by a factor of 0.1 every 2 epochs
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=2, gamma=0.1)
+# exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=2, gamma=0.1)
 
 num_epochs = 100
 since = time.time()
@@ -165,8 +176,8 @@ model.train()
 print('Pretrained:' + str(pretrained))
 print('momentum:' + str(optimizer_ft.state_dict()['param_groups'][0]['momentum']))
 print('weight_decay:' + str(optimizer_ft.state_dict()['param_groups'][0]['weight_decay']))
-print('LR decay gamma:' + str(exp_lr_scheduler.state_dict()['gamma']))
-print('LR decay step size:' + str(exp_lr_scheduler.state_dict()['step_size']))
+# print('LR decay gamma:' + str(exp_lr_scheduler.state_dict()['gamma']))
+# print('LR decay step size:' + str(exp_lr_scheduler.state_dict()['step_size']))
 
 for epoch in range(num_epochs):
     print('\nEpoch {}/{}'.format(epoch, num_epochs - 1))
@@ -185,7 +196,7 @@ for epoch in range(num_epochs):
     # perform backward propagation, optimization and update model parameters
     losses.backward()
     optimizer_ft.step()
-    exp_lr_scheduler.step()
+    # exp_lr_scheduler.step()
     del losses
     gc.collect()
 
