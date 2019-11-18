@@ -1,6 +1,9 @@
 This project implementation is based on the following paper:
 
-Youbao Tang, Ke Yan*, Yuxing Tang*, Jiamin Liu*, Jing Xiao, Ronald M. Summers, "ULDor: A Universal Lesion Detector for CT Scans with Pseudo Masks and Hard Negative Example Mining," ISBI, 2019 [(arXiv)](https://arxiv.org/abs/1901.06359) 
+Youbao Tang, Ke Yan*, Yuxing Tang*, Jiamin Liu*, Jing Xiao, Ronald M. Summers, "ULDor: A Universal Lesion Detector for CT Scans with Pseudo Masks and Hard Negative Example Mining," ISBI, 2019<sup>*</sup> [(arXiv)](https://arxiv.org/abs/1901.06359) 
+Some of the major difference between this project and the above paper are:
+1. The paper employs a "Hard Negative Example Mining" method which is not currently implemented in this project
+2. For the MaskR-CNN backbone this implementation uses a Feature Pyramid Network(FPN) with a ResNet-50 for the bottom-up pathway whereas the paper employs a ResNet-101 for the backbone of the MaskR-CNN. 
 
 In addition the data preprocessing steps were adapted from:
 https://github.com/rsummers11/CADLab/tree/master/lesion_detector_3DCE
@@ -14,9 +17,9 @@ Ke Yan et al., "3D Context Enhanced Region-based Convolutional Neural Network fo
 Image recognition and deep learning technologies using Convolutional Neural Networks (CNN) have demonstrated remarkable progress in the medical image analysis field. Traditionally radiologists with extensive clinical expertise visually asses medical images to detect and classify diseases. The task of lesion detection is particularly challenging because non-lesions and true lesions
 can appear similar. 
 
-For my capstone project I use a Mask R-CNN <sup>[1](https://arxiv.org/abs/1703.06870)</sup> with a ResNet-50 Feature Pyramid Network backbone to detect lesions in a CT scan. The model outputs a bounding box, instance segmentation and score for each detected lesion. Mask R-CNN was built by the Facebook AI research team (FAIR) in April 2017.
+For my capstone project I use a Mask R-CNN <sup>[1](https://arxiv.org/abs/1703.06870)</sup> with a ResNet-50 Feature Pyramid Network backbone to detect lesions in a CT scan. The model outputs a bounding box, instance segmentation mask and confidence score for each detected lesion. Mask R-CNN was built by the Facebook AI research team (FAIR) in April 2017.
 
-The algorithms are implemented using Pytoch and run on an Nvidia Quadro P4000 GPU. 
+The algorithms are implemented using PyToch and run on an Nvidia Quadro P4000 GPU. 
 ## Data:
 The dataset used to train the model has a variety of lesion types such as lung nodules, liver tumors and enlarged lymph nodes. This large-scale dataset of CT images, named DeepLesion, is publicly available and has over 32,000 annotated lesions.<sup>[2](https://nihcc.app.box.com/v/DeepLesion/)</sup> The data consists of 32,120 axial computed tomography (CT) slices with 1 to 3 lesions in each image. The annotations and meta-data are stored in three excel files:
 
@@ -47,7 +50,12 @@ different windows however a for this project a single range (-1024,3071 HU) is u
 covers the intensity ranges of the lung, soft tissue, and bone.
 3. Resizing: Resize every image slice so that each pixel corresponds to 0.8mm.
 4. Tensor Conversion: Covert image and labels to tensors
-5. Clip black border (commented out in code): Clip black borders in image for computational efficiency and adjust labels (bounding box and mask) accordingly. For some unknown reason this transformation is apparently preventing the model from learning useful features and does not allow the training loss to converge. This merits further investigation
+5. Clip black border (commented out in code): Clip black borders in image for computational efficiency and adjust bounding box and segmentatoin mask accordingly. For some unknown reason this transformation is apparently preventing the model's training loss to converge. This merits further investigation.
+
+Psudo-Mask Construction:
+
+The DeepLesion dataset includes a file containing bookmarks (i.e. bounding boxes and RECIST diameters) for each lesion which are marked by radiologists. However the dataset does not include a segmentation mask for each lesion. Therefore using the method explained in \(\*\) a psudo-mask is constructed by fitting an ellipse around the RECIST diameters. 
+
 
 PyTorch has tools to streamline the data preparation process used in many machine learning problems. Below I briefly go through the concepts which are used to make data loading easy.
 
@@ -125,18 +133,18 @@ This is an iterator class which provides features such as batching and shuffling
 The above tuple is for one sample. When the DataLoader uses the defaulf batch collate function it will maintain the same structure. In other words the DataLoader iterator will, during each iteration, return a tuple in which the first element is a list of 'image' structures and the second element is a dictionary. This dictionary will have the same keys as 'targets'. Therefore targets['boxes'] will return a list where each element in the list is itself a list of bounding boxes. Similarly targets['masks'] returns a list where each element in the list is itself a list of masks. Howevef the strucure of target which is requiored for the maskrcnn_resnet50_fpn is for 'targets' to be a list (not a dictionary) where each elements of this list is a dictionary with keys 'boxes', 'masks', 'labels'. To make this conversion a custom batch collate function is unsed (BatchCollator).
 
 ## Model:
-The model employed to detect lesions when given an image of a CT scan is a Mask R-CNN with a ResNet-50-FPN backbone. A Mask R-CNN is used to detect both bounding boxes around objects (Object Detection) as well as mask segmentation (Semantic Segmentation) for each lesion object. This means that for each lesion detected a box surrounding the object is given as well as each pixel of the image is classified as being a background pixel or a lesion pixel. These two tasks combined together are called Object Instance Segmentation.
+The model employed to detect lesions when given an image of a CT scan is a Mask R-CNN with a ResNet-50-FPN backbone. A Mask R-CNN is used to detect both bounding boxes around objects (Object Detection) as well as mask segmentation (Semantic Segmentation) for each lesion object. This means that for each detected lesion a box surrounding the object is given as well as each pixel of the image is classified as being a background pixel or a lesion pixel. These two tasks combined together are called Object Instance Segmentation.
 
 Here are the main components of the Mask R-CNN which consists of a feature extracter (backbone) followed by a Region Proposal Network and two network heads (box and mask) that run parallel to each other:
 
 Backbone:
 
-The ResNet-50 backbone is a an architecture which acts as a feature extractor which means it takes the input image and outputs a feature map. The early layers detect low level features (edges and corners), and later layers successively detect higher level features (cars, balls, cats). The ResNet-50-FPN backbone is an improvement of this concept by using a Feature Pyramid Network. Essentially the FPN has a bottom-top pathway where the image is passed through a series of CNNs with down sampling (by doubling the stride at each stage). At each stage the image's spatial dimension (i.e. image resolution which is not to be confused with feature resolution) decreases however the semantic value (feature resolution) increases. This is then followed by the top-bottom pathway which takes the high level features from the last layer of the bottom-top pathway and passes them down through a series of CNNs to lower layers (upsampling by a factor of 2 at each layer). The feaure from the top-bottom pathway at each layer are then fused with the features of the same spatial size from the bottom-up pathway via lateral connections.
+The ResNet50 backbone is a an architecture which acts as a feature extractor which means it takes the input image and outputs a feature map. The early layers detect low level features (edges and corners), and later layers successively detect higher level features (cars, balls, cats). The ResNet-50-FPN backbone is an improvement of this concept by using a Feature Pyramid Network. Essentially the FPN has a bottom-top pathway (which in this case is the ResNet-50) where the image is passed through a series of CNNs with down sampling (by doubling the stride at each stage). At each stage the image's spatial dimension (i.e. image resolution which is not to be confused with feature resolution) decreases however the semantic value (feature resolution) increases. This is then followed by the top-bottom pathway which takes the high level features from the last layer of the bottom-top pathway and passes them down to lower layers (using upsampling by a factor of 2 at each layer). The feaure from the top-bottom pathway at each layer are then fused with the features of the same spatial size from the bottom-up pathway via lateral connections.
 
 
 Region Proposal Network (RPN):
 
-The RPN is essentially a feature detector and not an object detector on its own. The features from the FPN are fed into a learned RPN. The RPN learns to propose regions of interest (RoI) from the image feature maps using anchors which are a set of boxes which scale according to the input image. These RoIs are regions which may contain an object.
+The FPN is essentially a feature detector and not an object detector on its own. The features from the FPN are fed into a learned RPN. The RPN learns to propose regions of interest (RoI) from the image feature maps using anchors which are a set of boxes which scale according to the input image. These RoIs are regions which may contain an object.
 
 RoIAlign:
 
