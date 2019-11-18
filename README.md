@@ -198,8 +198,10 @@ In addition an anchor_generator (with scales 16, 24, 32, 48, 96 and aspect ratio
 
 # Sanity Test
 
-In order to quickly test the model's output one scan from the test dataset is taken. Upon inspection one can see that the model's top prediction is a true positive detection with 83% confidence. The script for the test is contained in 'test.py'. In the below image the red bounding box is the prediction and the green bounding box is the ground truth. The pink segmentation mask is the result of the overlap between the blue ground truth mask and the red predicted mask.
+In order to quickly test the model's output a few samples are taken from the 'test' dataset. Predictions where the model has less than a 65.5% confidence score is ignored. The effect of this is that less false positive predictions are displayed. The trade-off is that some true positive results may be left out. The script for the test is contained in 'test.py'. In the below images the red bounding box is the prediction and the green bounding box is the ground truth. Predicted masks are in red color and ground truth masks are in blue. Where the two masks overlap the color becomes pink. The confidence scores of the prediction are written on top of each box in red.
 
-![Test CT Scan_overlap](simple_test/test_sample_overlap.jpg)
-![Test CT Scan_ground_truth](simple_test/test_sample_gt.jpg)
-![Test CT Scan_prediction](simple_test/test_sample_pred.jpg)
+![004409_01_01_008.png_pred.jpg](simple_test/004409_01_01_008.png_pred.jpg)
+![000016_01_01_008](simple_test/000016_01_01_008.png_pred.jpg)
+![000016_01_01_025.png_pred.jpg](simple_test/000016_01_01_025.png_pred.jpg)
+![000016_01_01_030.png_pred.jpg](simple_test/000016_01_01_030.png_pred.jpg)
+

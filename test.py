@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from data.datasets.deeplesion import *
 from data import transforms as T
 from data.collate_batch import BatchCollator
+from utils import remove_overlapping
 
 # A single windowing (−1024 to 3071 HU) that covers the
 # intensity ranges of lung, soft tissue, and bone.
@@ -16,20 +17,18 @@ NORM_SPACING = 0.8  # Resize every image slice so that each pixel corresponds to
 MAX_SIZE = 512
 
 DIR_IN = 'Images_png'  # input directory
-GT_FN_TRAIN = 'DL_info_train_sample.csv'  # Ground truth file for training data
-GT_FN_VAL = 'DL_info_val_sample.csv'  # Ground truth file for validation data
-GT_FN_TEST = 'DL_info_test_sample.csv'  # Ground truth file for test data
+GT_FN_TRAIN = 'annotation_info\\DL_info_train_sample.csv'  # Ground truth file for training data
+GT_FN_VAL = 'annotation_info\\DL_info_val_sample.csv'  # Ground truth file for validation data
+GT_FN_TEST = 'annotation_info\\DL_info_test_sample.csv'  # Ground truth file for test data
 GT_FN_DICT = {"train": GT_FN_TRAIN, "val": GT_FN_VAL, "test": GT_FN_TEST}
 
 
 @torch.no_grad()
-def test_model(model, dataloader):
+def test_model(model, inputs):
     model.eval()  # Set model to training mode
-    for inputs, targets in dataloader:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = model.to(device)
-        output = model(inputs)
-    return output
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    return model(inputs)
 
 
 def main():
@@ -69,30 +68,35 @@ def main():
 
     dataloaders_dup = {x: DataLoader(image_datasets_dup[x], batch_size=3, shuffle=True, num_workers=0
                                      , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
-    output = test_model(model, dataloaders['test'])
-    predbox = output[0]['boxes'][0].numpy()
-    predmask = output[0]['masks'][0].squeeze().numpy()
-    predmask = np.where(predmask > 0.5, 1, 0)
-    print(output[0]['scores'][0].numpy())
     for batch_id, (inputs, targets) in enumerate(dataloaders_dup['test']):
-        i = 0
-        for i, (image, target) in enumerate(zip(inputs, targets)):
+        outputs = test_model(model, inputs)
+        outputs = remove_overlapping(outputs, 0.655)
+        for image, target, output in zip(inputs, targets, outputs):
             img_copy = image.squeeze().numpy()
             images = [img_copy] * 3
             images = [im.astype(float) for im in images]
             img_copy = cv2.merge(images)
-            for j, (bbox, pseudo_mask) in enumerate(zip(target["boxes"], target["masks"])):
+            for bbox, pseudo_mask in zip(target["boxes"], target["masks"]):
                 bbox = bbox.squeeze().numpy()
                 bbox = np.int16(bbox)
                 mask = pseudo_mask.squeeze().numpy()
                 cv2.rectangle(img_copy, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 1)
-                cv2.rectangle(img_copy, (predbox[0], predbox[1]), (predbox[2], predbox[3]), (0, 0, 255), 1)
                 msk_idx = np.where(mask == 1)
-                pmsk_idx = np.where(predmask == 1)
                 img_copy[msk_idx[0], msk_idx[1], 0] = 255
+            for predbox, predmask, score in zip(output['boxes'], output['masks'], output['scores']):
+                if score < 0.655:
+                    break
+                predbox = predbox.numpy()
+                predmask = predmask.squeeze().numpy()
+                score = score.numpy()
+                predmask = np.where(predmask > 0.5, 1, 0)
+                cv2.rectangle(img_copy, (predbox[0], predbox[1]), (predbox[2], predbox[3]), (0, 0, 255), 1)
+                pmsk_idx = np.where(predmask == 1)
                 img_copy[pmsk_idx[0], pmsk_idx[1], 2] = 255
-            # cv2.imshow(str(batch_id) + " " + str(i), img_copy)
-            cv2.imwrite('simple_test\\test_sample_overlap.jpg', img_copy*255)
+                cv2.putText(img_copy, str(score), (int(predbox[0]), int(predbox[1]-5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5
+                            , (0, 0, 255), 1, cv2.LINE_AA)
+            # cv2.imshow(str(target['image_id']), img_copy)
+            cv2.imwrite('simple_test\\' + str(target['image_id']).replace('\\', '_') + '_pred.jpg', img_copy*255)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 

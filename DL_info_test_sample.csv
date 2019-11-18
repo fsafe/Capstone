@@ -1,2 +1,0 @@
-File_name,Patient_index,Study_index,Series_ID,Key_slice_index,Measurement_coordinates,Bounding_boxes,Lesion_diameters_Pixel_,Normalized_lesion_location,Coarse_lesion_type,Possibly_noisy,Slice_range,Spacing_mm_px_,Image_size,DICOM_windows,Patient_gender,Patient_age,Train_Val_Test
-004409_01_01_008.png,4409,1,1,8,"322.283, 379.048, 342.317, 365.691, 326.735, 364.578, 337.865, 381.274","317.283, 359.578, 347.317, 386.274","24.0788, 20.0657","0.63181, 0.691944, 0.379848",3,0,"1, 18","0.431, 0.431, 3","512, 512","-220, 380",F,75,3

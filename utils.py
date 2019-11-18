@@ -210,6 +210,27 @@ def calc_froc(ious, detection_threshold=0.50, iou_threshold=0.50):
     return llf, nlf
 
 
+def remove_overlapping(pred_list, iou_threshold=0.5):
+    for predictions in pred_list:
+        del_items = 0
+        for i, (predbox, score, mask) in enumerate(zip(predictions['boxes'], predictions['scores']
+                                                       , predictions['masks'])):
+            i -= del_items
+            for j in range(i):
+                if calculate_iou(predbox, predictions['boxes'][j]) >= iou_threshold:
+                    if score <= predictions['scores'][j]:
+                        predictions['boxes'] = torch.cat([predictions['boxes'][:i], predictions['boxes'][i+1:]])
+                        predictions['scores'] = torch.cat([predictions['scores'][:i], predictions['scores'][i+1:]])
+                        predictions['masks'] = torch.cat([predictions['masks'][:i], predictions['masks'][i+1:]])
+                    else:
+                        predictions['boxes'] = torch.cat([predictions['boxes'][:j], predictions['boxes'][j + 1:]])
+                        predictions['scores'] = torch.cat([predictions['scores'][:j], predictions['scores'][j + 1:]])
+                        predictions['masks'] = torch.cat([predictions['masks'][:j], predictions['masks'][j + 1:]])
+                    del_items += 1
+                    break
+    return pred_list
+
+
 def removekey(d, listofkeys):
     r = dict(d)
     for key in listofkeys:
