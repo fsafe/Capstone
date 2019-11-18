@@ -76,6 +76,7 @@ A sample of the DeepLesion dataset will be a tuple consisting of the CT scan ima
 DeepLesion's initializer also takes an optional argument 'transform' which is used to apply the preprocessing steps described above
 
 Transformations: 
+
 For each preprocessing/transformation step a separate class is created. These classes will implement a \_\_call__ method and an \_\_init__ method. The \_\_init__ is used to customize the transformation. For example in the ToOriginalHU class, 'offset' is passed to the \_\_init__ method. The \_\_call__ method on the other hand receives the parameters which are potentially transformed. In the  ToOriginalHU class the 'offset' value is subtracted from the image, which is passed as a parameter to the \_\_call__ method. This is what the resulting code looks like:
 
     class ToOriginalHU(object):
