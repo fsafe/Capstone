@@ -198,7 +198,7 @@ In addition an anchor_generator (with scales 16, 24, 32, 48, 96 and aspect ratio
 
 # Sanity Test
 
-In order to quickly test the model's output a few samples are taken from the 'test' dataset. Predictions where the model has less than a 65.5% confidence score is ignored. The effect of this is that less false positive predictions are displayed. The trade-off is that some true positive results may be left out. The script for the test is contained in 'test.py'. In the below images the red bounding box is the prediction and the green bounding box is the ground truth. Predicted masks in red color have no overlap with ground truth (false positives) and ground truth masks are in blue. Where the prediction and ground truth masks overlap the color becomes pink. The confidence scores of each prediction is written on top of each red box in red.
+In order to quickly test the model's output a few samples are taken from the 'test' dataset. Predictions where the model has less than a 65.5% confidence score is ignored. The effect of this is that less false positive predictions are displayed. The trade-off is that some true positive results may be left out. The script for the test is contained in 'sanity_test.py'. In the below images the red bounding box is the prediction and the green bounding box is the ground truth. Predicted masks in red color have no overlap with ground truth (false positives) and ground truth masks are in blue. Where the prediction and ground truth masks overlap the color becomes pink. The confidence scores of each prediction is written on top of each red box in red.
 
 ![004409_01_01_008.png_pred.jpg](simple_test/004409_01_01_008.png_pred.jpg)
 ![000016_01_01_008](simple_test/000016_01_01_008.png_pred.jpg)
