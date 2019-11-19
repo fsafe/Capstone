@@ -94,7 +94,7 @@ def get_model(pre_trained, pretrained_backbone, numclasses):
 
 
 def main():
-    logging.basicConfig(filename='example.log', level=logging.DEBUG)
+    logging.basicConfig(filename='logs\\example.log', level=logging.DEBUG)
     data_transforms = {
         'train': T.Compose([T.ToOriginalHU(INTENSITY_OFFSET)
                             , T.IntensityWindowing(WINDOWING)

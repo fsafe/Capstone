@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset
+import copy
 from utils import *
 
 
@@ -14,9 +15,9 @@ class DeepLesion(Dataset):
     def __getitem__(self, index):
         fname = list(self.annotation_info.keys())[index]
         image = cv2.imread(os.path.join(self.data_dir, fname), -1)
-        bboxes = list(self.annotation_info.values())[index][1]
-        points = list(self.annotation_info.values())[index][0]
-        spacing = list(self.annotation_info.values())[index][4][0]
+        bboxes = copy.deepcopy(list(self.annotation_info.values())[index][1])
+        points = copy.deepcopy(list(self.annotation_info.values())[index][0])
+        spacing = copy.deepcopy(list(self.annotation_info.values())[index][4][0])
         pseudo_masks = CreatePseudoMask(image, bboxes, points)
         targets = {"boxes": bboxes, "masks": pseudo_masks}
         if self.transform:

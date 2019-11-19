@@ -61,14 +61,9 @@ def main():
     image_datasets = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val'
                                                                                                       , 'test']}
 
-    image_datasets_dup = {x: DeepLesion(DIR_IN + os.sep + x, GT_FN_DICT[x], data_transforms[x]) for x in ['train', 'val'
-                                                                                                          , 'test']}
     dataloaders = {x: DataLoader(image_datasets[x], batch_size=3, shuffle=True, num_workers=0
                                  , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
-
-    dataloaders_dup = {x: DataLoader(image_datasets_dup[x], batch_size=3, shuffle=True, num_workers=0
-                                     , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
-    for batch_id, (inputs, targets) in enumerate(dataloaders_dup['test']):
+    for batch_id, (inputs, targets) in enumerate(dataloaders['test']):
         outputs = test_model(model, inputs)
         outputs = remove_overlapping(outputs, 0.655)
         for image, target, output in zip(inputs, targets, outputs):
