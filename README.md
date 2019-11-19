@@ -1,6 +1,6 @@
 This project implementation is based on the following paper:
 
-Youbao Tang, Ke Yan*, Yuxing Tang*, Jiamin Liu*, Jing Xiao, Ronald M. Summers, "ULDor: A Universal Lesion Detector for CT Scans with Pseudo Masks and Hard Negative Example Mining," ISBI, 2019<sup>*</sup> [(arXiv)](https://arxiv.org/abs/1901.06359) 
+Youbao Tang, Ke Yan*, Yuxing Tang*, Jiamin Liu*, Jing Xiao, Ronald M. Summers, "ULDor: A Universal Lesion Detector for CT Scans with Pseudo Masks and Hard Negative Example Mining," ISBI, 2019<sup>**</sup> [(arXiv)](https://arxiv.org/abs/1901.06359) 
 Some of the major difference between this project and the above paper are:
 1. The paper employs a "Hard Negative Example Mining" method which is not currently implemented in this project
 2. For the MaskR-CNN backbone this implementation uses a Feature Pyramid Network(FPN) with a ResNet-50 for the bottom-up pathway whereas the paper employs a ResNet-101 for the backbone of the MaskR-CNN. 
@@ -54,7 +54,7 @@ covers the intensity ranges of the lung, soft tissue, and bone.
 
 Psudo-Mask Construction:
 
-The DeepLesion dataset includes a file containing bookmarks (i.e. bounding boxes and RECIST diameters) for each lesion which are marked by radiologists. However the dataset does not include a segmentation mask for each lesion. Therefore using the method explained in \(\*\) a psudo-mask is constructed by fitting an ellipse around the RECIST diameters. 
+The DeepLesion dataset includes a file containing bookmarks (i.e. bounding boxes and RECIST diameters) for each lesion which are marked by radiologists. However the dataset does not include a segmentation mask for each lesion. Therefore using the method explained in \(\**\) a psudo-mask is constructed by fitting an ellipse around the RECIST diameters. 
 
 
 PyTorch has tools to streamline the data preparation process used in many machine learning problems. Below I briefly go through the concepts which are used to make data loading easy.
