@@ -37,7 +37,6 @@ def main():
                                   , box_batch_size_per_image=32)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.load_state_dict(torch.load('saved_models' + os.sep + '0_deeplesion.pth', map_location=device))
     data_transforms = {
         'train': T.Compose([T.ToOriginalHU(INTENSITY_OFFSET)
                             , T.IntensityWindowing(WINDOWING)
@@ -62,6 +61,7 @@ def main():
     logging.basicConfig(filename='logs' + os.sep + 'test.log', level=logging.DEBUG)
     since = time.time()
     for epoch in range(num_epochs):
+        model.load_state_dict(torch.load('saved_models' + os.sep + str(epoch) + '_deeplesion.pth', map_location=device))
         logging.info('Epoch {}/{}'.format(epoch, num_epochs - 1))
         logging.info('-' * 20)
 
