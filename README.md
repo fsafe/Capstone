@@ -3,7 +3,8 @@ This project implementation is based on the following paper:
 Youbao Tang, Ke Yan*, Yuxing Tang*, Jiamin Liu*, Jing Xiao, Ronald M. Summers, "ULDor: A Universal Lesion Detector for CT Scans with Pseudo Masks and Hard Negative Example Mining," ISBI, 2019<sup>**</sup> [(arXiv)](https://arxiv.org/abs/1901.06359) 
 Some of the major difference between this project and the above paper are:
 1. The paper employs a "Hard Negative Example Mining" method which is not currently implemented in this project
-2. For the MaskR-CNN backbone this implementation uses a Feature Pyramid Network(FPN) with a ResNet-50 for the bottom-up pathway whereas the paper employs a ResNet-101 for the backbone of the MaskR-CNN. 
+2. For the MaskR-CNN backbone this implementation uses a Feature Pyramid Network(FPN) with a ResNet-50 for the bottom-up pathway whereas the paper employs a ResNet-101 for the backbone of the MaskR-CNN.
+3. A learning rate decay is not used in this implementation. 
 
 In addition the data preprocessing steps were adapted from:
 https://github.com/rsummers11/CADLab/tree/master/lesion_detector_3DCE

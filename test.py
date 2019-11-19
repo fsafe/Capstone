@@ -16,9 +16,9 @@ NORM_SPACING = 0.8  # Resize every image slice so that each pixel corresponds to
 MAX_SIZE = 512
 
 DIR_IN = 'Images_png'  # input directory
-GT_FN_TRAIN = 'annotation_info\\DL_info_train_sample.csv'  # Ground truth file for training data
-GT_FN_VAL = 'annotation_info\\DL_info_val_sample.csv'  # Ground truth file for validation data
-GT_FN_TEST = 'annotation_info\\DL_info_test_sample.csv'  # Ground truth file for test data
+GT_FN_TRAIN = 'annotation_info' + os.sep + 'DL_info_train_sample.csv'  # Ground truth file for training data
+GT_FN_VAL = 'annotation_info' + os.sep + 'DL_info_val_sample.csv'  # Ground truth file for validation data
+GT_FN_TEST = 'annotation_info' + os.sep + 'DL_info_test_sample.csv'  # Ground truth file for test data
 GT_FN_DICT = {"train": GT_FN_TRAIN, "val": GT_FN_VAL, "test": GT_FN_TEST}
 DIR_IN = 'Images_png'  # input directory
 
@@ -37,7 +37,7 @@ def main():
                                   , box_batch_size_per_image=32)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.load_state_dict(torch.load('saved_models\\0_deeplesion.pth', map_location=device))
+    model.load_state_dict(torch.load('saved_models' + os.sep + '0_deeplesion.pth', map_location=device))
     data_transforms = {
         'train': T.Compose([T.ToOriginalHU(INTENSITY_OFFSET)
                             , T.IntensityWindowing(WINDOWING)
@@ -59,7 +59,7 @@ def main():
                                  , collate_fn=BatchCollator) for x in ['train', 'val', 'test']}
 
     num_epochs = 10
-    logging.basicConfig(filename='logs\\test.log', level=logging.DEBUG)
+    logging.basicConfig(filename='logs' + os.sep + 'test.log', level=logging.DEBUG)
     since = time.time()
     for epoch in range(num_epochs):
         logging.info('Epoch {}/{}'.format(epoch, num_epochs - 1))

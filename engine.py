@@ -1,6 +1,5 @@
 import time
 import logging
-import copy
 from torch.optim import lr_scheduler, Adam, SGD
 from torchvision.models.detection.rpn import AnchorGenerator, RPNHead
 from data import transforms as T
@@ -22,9 +21,9 @@ BG_INTENSITY = 32000
 INTENSITY_OFFSET = 32768
 NORM_SPACING = 0.8  # Resize every image slice so that each pixel corresponds to 0.8mm
 MAX_SIZE = 512
-GT_FN_TRAIN = 'annotation_info\\DL_info_train.csv'  # Ground truth file for training data
-GT_FN_VAL = 'annotation_info\\DL_info_val.csv'  # Ground truth file for validation data
-GT_FN_TEST = 'annotation_info\\DL_info_test.csv'  # Ground truth file for test data
+GT_FN_TRAIN = 'annotation_info' + os.sep + 'DL_info_train_sample.csv'  # Ground truth file for training data
+GT_FN_VAL = 'annotation_info' + os.sep + 'DL_info_val_sample.csv'  # Ground truth file for validation data
+GT_FN_TEST = 'annotation_info' + os.sep + 'DL_info_test.csv'  # Ground truth file for test data
 GT_FN_DICT = {"train": GT_FN_TRAIN, "val": GT_FN_VAL, "test": GT_FN_TEST}
 DIR_IN = 'Images_png'  # input directory
 
@@ -94,7 +93,7 @@ def get_model(pre_trained, pretrained_backbone, numclasses):
 
 
 def main():
-    logging.basicConfig(filename='logs\\example.log', level=logging.DEBUG)
+    logging.basicConfig(filename='logs' + os.sep + 'example.log', level=logging.DEBUG)
     data_transforms = {
         'train': T.Compose([T.ToOriginalHU(INTENSITY_OFFSET)
                             , T.IntensityWindowing(WINDOWING)
@@ -148,22 +147,22 @@ def main():
     # optimizer_ft = Adam(params, lr=0.001)
 
     # Decay LR by a factor of 0.1 every 7 epochs
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=4, gamma=0.1)
+    # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=4, gamma=0.1)
     # exp_lr_scheduler = lr_scheduler.CosineAnnealingLR(optimizer_ft, T_max=100)
 
     num_epochs = 10
     since = time.time()
-    best_model_wts = copy.deepcopy(dl_model.state_dict())
-    best_llf = 0
-    best_nlf = 999
+    # best_model_wts = copy.deepcopy(dl_model.state_dict())
+    # best_llf = 0
+    # best_nlf = 999
 
     logging.info('momentum:' + str(optimizer_ft.state_dict()['param_groups'][0]['momentum']))
     logging.info('weight_decay:' + str(optimizer_ft.state_dict()['param_groups'][0]['weight_decay']))
-    logging.info('LR decay gamma:' + str(exp_lr_scheduler.state_dict()['gamma']))
-    logging.info('LR decay step size:' + str(exp_lr_scheduler.state_dict()['step_size']) + '\n')
+    # logging.info('LR decay gamma:' + str(exp_lr_scheduler.state_dict()['gamma']))
+    # logging.info('LR decay step size:' + str(exp_lr_scheduler.state_dict()['step_size']) + '\n')
 
     for epoch in range(num_epochs):
-        deep_copy_flag = False
+        # deep_copy_flag = False
         logging.info('Epoch {}/{}'.format(epoch, num_epochs - 1))
         logging.info('-' * 20)
         train_one_epoc(dl_model, optimizer_ft, dl_dataloaders['train'], dl_dataset_sizes['train'])
@@ -173,18 +172,18 @@ def main():
         logging.info('LLF: {}'.format(llf))
         logging.info('NLF: {}'.format(nlf) + '\n')
 
-        exp_lr_scheduler.step()
+        # exp_lr_scheduler.step()
 
-        if llf > best_llf:
-            deep_copy_flag = True
-            best_nlf = nlf
-            best_llf = llf
-        elif (llf == best_llf) & (nlf < best_nlf):
-            deep_copy_flag = True
-            best_nlf = nlf
-        if deep_copy_flag:
-            best_model_wts = copy.deepcopy(dl_model.state_dict())
-    torch.save(best_model_wts, 'deeplesion.pth')
+        # if llf > best_llf:
+        #     deep_copy_flag = True
+        #     best_nlf = nlf
+        #     best_llf = llf
+        # elif (llf == best_llf) & (nlf < best_nlf):
+        #     deep_copy_flag = True
+        #     best_nlf = nlf
+        # if deep_copy_flag:
+        best_model_wts = copy.deepcopy(dl_model.state_dict())
+        torch.save(best_model_wts, 'saved_models' + os.sep + str(epoch) + '_deeplesion.pth')
     time_elapsed = time.time() - since
     logging.info('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
 

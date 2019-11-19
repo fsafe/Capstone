@@ -17,9 +17,9 @@ NORM_SPACING = 0.8  # Resize every image slice so that each pixel corresponds to
 MAX_SIZE = 512
 
 DIR_IN = 'Images_png'  # input directory
-GT_FN_TRAIN = 'annotation_info\\DL_info_train_sample.csv'  # Ground truth file for training data
-GT_FN_VAL = 'annotation_info\\DL_info_val_sample.csv'  # Ground truth file for validation data
-GT_FN_TEST = 'annotation_info\\DL_info_test_sample.csv'  # Ground truth file for test data
+GT_FN_TRAIN = 'annotation_info' + os.sep + 'DL_info_train_sample.csv'  # Ground truth file for training data
+GT_FN_VAL = 'annotation_info' + os.sep + 'DL_info_val_sample.csv'  # Ground truth file for validation data
+GT_FN_TEST = 'annotation_info' + os.sep + 'DL_info_test_sample.csv'  # Ground truth file for test data
 GT_FN_DICT = {"train": GT_FN_TRAIN, "val": GT_FN_VAL, "test": GT_FN_TEST}
 
 
@@ -43,7 +43,7 @@ def main():
                                   , rpn_post_nms_top_n_test=300, rpn_fg_iou_thresh=0.5, rpn_bg_iou_thresh=0.3
                                   , rpn_positive_fraction=0.7, bbox_reg_weights=(1.0, 1.0, 1.0, 1.0)
                                   , box_batch_size_per_image=32)
-    model.load_state_dict(torch.load('saved_models\\0_deeplesion.pth', map_location='cpu'))
+    model.load_state_dict(torch.load('saved_models' + os.sep + '0_deeplesion.pth', map_location='cpu'))
     data_transforms = {
         'train': T.Compose([T.ToOriginalHU(INTENSITY_OFFSET)
                             , T.IntensityWindowing(WINDOWING)
@@ -91,7 +91,7 @@ def main():
                 cv2.putText(img_copy, str(score), (int(predbox[0]), int(predbox[1]-5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5
                             , (0, 0, 255), 1, cv2.LINE_AA)
             # cv2.imshow(str(target['image_id']), img_copy)
-            cv2.imwrite('simple_test\\' + str(target['image_id']).replace('\\', '_') + '_pred.jpg', img_copy*255)
+            cv2.imwrite('simple_test' + os.sep + str(target['image_id']).replace(os.sep, '_') + '_pred.jpg', img_copy*255)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
